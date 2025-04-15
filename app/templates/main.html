@@ -1,0 +1,66 @@
+<!-- frontend/main.html -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskFlow - Главная</title>
+    <link rel="stylesheet" href="../static/styles/main.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+   <link
+     href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap"
+     rel="stylesheet"
+   />
+   <link
+     rel="stylesheet"
+     href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css"
+   />
+</head>
+<body>
+    <header class="header">
+        <a class="logo" href="#"><span>TaskFlow</span></a>
+    </header>
+
+    <aside class="sidebar">
+        <ul class="nav-menu">
+            <li><a href="#"><img class="icon" src="https://img.icons8.com/windows/32/search--v1.png" alt="search--v1"/>Поиск</a></li>
+            <li><a href="#"><img class="icon" src="https://img.icons8.com/windows/32/todo-list.png" alt="todo-list"/>Задачи</a></li>
+            <li><a href="#"><img class="icon" src="https://img.icons8.com/windows/32/flipboard.png" alt="flipboard"/>Проекты</a></li>
+            <li><a href="#"><img class="icon" src="https://img.icons8.com/windows/32/gender-neutral-user.png" alt="gender-neutral-user"/>Профиль</a></li>
+            
+            <li><a href="#" class="create-task"><img class="icon" src="https://img.icons8.com/windows/32/plus-math.png" alt="plus-math"/>Создать задачу</a></li>
+        </ul>
+
+        <ul class="nav-menu bottom-menu">
+            <li><a href="#"><img class="icon" src="https://img.icons8.com/windows/32/help.png" alt="help"/>Помощь</a></li>
+            <li><a href="#"><img class="icon" src="https://img.icons8.com/windows/32/settings--v1.png" alt="settings--v1"/>Настройки</a></li>
+            <li><a href="{{ url_for('taskflow.logout') }}"><img class="icon" src="https://img.icons8.com/windows/32/exit.png" alt="exit"/>Выход</a></li>
+        </ul>
+    </aside>
+
+    <main class="main-content">
+        <div class="tasks-header">
+            <h1>Мои задачи</h1>
+        </div>
+
+        <div class="task-categories">
+            <div class="category">
+                <h2><a href="#">Я автор</a></h2>
+                <p class="empty-tasks">В списке нет задач</p>
+            </div>
+
+            <div class="category">
+                <h2><a href="#">Я исполнитель</a></h2>
+                <p class="empty-tasks">В списке нет задач</p>
+            </div>
+
+            <div class="category">
+                <h2><a href="#">Ждет ответа</a></h2>
+                <p class="empty-tasks">В списке нет задач</p>
+            </div>
+        </div>
+    </main>
+
+</body>
+</html>

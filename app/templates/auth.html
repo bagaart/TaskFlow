@@ -1,0 +1,90 @@
+<!-- frontend/auth.html -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вход / Регистрация</title>
+    <link rel="stylesheet" href="/static/styles/auth.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+   <link
+     href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap"
+     rel="stylesheet"
+   />
+   <link
+     rel="stylesheet"
+     href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css"
+   />
+   <script src="/static/scripts/auth.js"></script>
+</head>
+<body>
+    <header class="header">
+        <a class="logo" href="#"><span>TaskFlow</span></a>
+    </header>
+
+    <div class="auth-container">
+        <div class="auth-tabs">
+            <div class="auth-tab active" data-tab="login">Вход</div>
+            <div class="auth-tab" data-tab="register">Регистрация</div>
+        </div>
+        
+        <!-- Форма авторизации -->
+        <form id="login-form" class="auth-form active" method="POST">
+            {{ login_form.hidden_tag() }}
+
+            <div class="form-group">
+                <label for="login-email">Email</label>
+                {{ login_form.email(class="form-control", id="login-email", required=True) }}
+                <div class="error-message">{{ login_form.email.errors[0] if login_form.email.errors else '' }}</div>
+            </div>
+
+            <div class="form-group">
+                <label for="login-password">Пароль</label>
+                {{ login_form.password(class="form-control", id="login-password", required=True) }}
+                <div class="error-message">{{ login_form.password.errors[0] if login_form.password.errors else '' }}</div>
+            </div>
+
+            <button type="submit" class="submit-btn">Войти</button>
+
+            <div class="form-footer">
+                Нет аккаунта? <a href="#" class="switch-tab" data-tab="register">Зарегистрируйтесь</a>
+            </div>
+        </form>
+
+        <!-- Форма регистрации -->
+        <form id="register-form" class="auth-form" method="POST">
+            {{ register_form.hidden_tag() }}
+            <div class="form-group">
+                <label for="register-name">Имя</label>
+                {{ register_form.name(class="form-control") }}
+                <div class="error-message">{{ register_form.name.errors[0] if register_form.name.errors else '' }}</div>
+            </div>
+
+            <div class="form-group">
+                <label for="register-email">Email</label>
+                {{ register_form.email(class="form-control") }}
+                <div class="error-message">{{ register_form.email.errors[0] if register_form.email.errors else '' }}</div>
+            </div>
+
+            <div class="form-group">
+                <label for="register-password">Пароль</label>
+                {{ register_form.password(class="form-control") }}
+                <div class="error-message">{{ register_form.password.errors[0] if register_form.password.errors else '' }}</div>
+            </div>
+
+            <div class="form-group">
+                <label for="register-confirm-password">Подтвердите пароль</label>
+                {{ register_form.confirm_password(class="form-control") }}
+                <div class="error-message">{{ register_form.confirm_password.errors[0] if register_form.confirm_password.errors else '' }}</div>
+            </div>
+
+            <button type="submit" class="submit-btn">Зарегистрироваться</button>
+            <div class="form-footer">
+                Уже есть аккаунт? <a href="#" class="switch-tab" data-tab="login">Войдите</a>
+            </div>
+        </form>
+    </div>
+
+</body>
+</html>
