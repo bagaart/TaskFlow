@@ -19,7 +19,7 @@
 </head>
 <body>
     <header class="header">
-        <a class="logo" href="#"><span>TaskFlow</span></a>
+        <a class="logo" href="{{ url_for('taskflow.index') }}"><span>TaskFlow</span></a>
     </header>
 
     <aside class="sidebar">
@@ -29,7 +29,10 @@
             <li><a href="#"><img class="icon" src="https://img.icons8.com/windows/32/flipboard.png" alt="flipboard"/>Проекты</a></li>
             <li><a href="#"><img class="icon" src="https://img.icons8.com/windows/32/gender-neutral-user.png" alt="gender-neutral-user"/>Профиль</a></li>
             
-            <li><a href="#" class="create-task"><img class="icon" src="https://img.icons8.com/windows/32/plus-math.png" alt="plus-math"/>Создать задачу</a></li>
+            <li><a href="{{ url_for('taskflow.task_create') }}" class="create-task"><img class="icon" src="https://img.icons8.com/windows/32/plus-math.png" alt="plus-math"/>Создать задачу</a></li>
+
+            <li><a href="{{ url_for('taskflow.create_project') }}" class="create-task"><img class="icon" src="https://img.icons8.com/windows/32/plus-math.png" alt="plus-math"/>Создать проект</a></li>
+
         </ul>
 
         <ul class="nav-menu bottom-menu">

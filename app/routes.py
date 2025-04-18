@@ -56,3 +56,13 @@ def auth():
 def logout():
     logout_user()
     return redirect(url_for('taskflow.auth'))
+
+@bp.route('/create_task')
+@login_required
+def task_create():
+    return render_template('task_create.html')
+
+@bp.route('/create_project')
+@login_required
+def create_project():
+    return render_template('project_create.html')

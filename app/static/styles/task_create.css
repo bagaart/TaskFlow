@@ -1,0 +1,346 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Montserrat', sans-serif;
+}
+
+body {
+    display: flex;
+    min-height: 100vh;
+    background-color: #f5f7fa;
+    color: #333;
+}
+
+.header {
+    padding: 20px 40px;
+    background: linear-gradient(135deg, #4a76a8 0%, #3a5f8a 100%);
+    color: white;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    position: fixed;
+    overflow: hidden;
+    width: 100%;
+    top: 0;
+    z-index: 100;
+}
+
+.header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(90deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.8) 50%, rgba(255,255,255,0.2) 100%);
+}
+
+.logo {
+    font-size: 28px;
+    font-weight: 700;
+    color: white;
+    text-decoration: none;
+    position: relative;
+    display: inline-block;
+    padding: 5px 0;
+}
+
+.logo::before {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 3px;
+    bottom: 0;
+    left: 0;
+    background-color: rgba(255, 255, 255, 0.7);
+    transform: scaleX(0);
+    transform-origin: right;
+    transition: transform 0.4s cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+.logo:hover::before {
+    transform: scaleX(1);
+    transform-origin: left;
+}
+
+.logo span {
+    display: inline-block;
+    transition: transform 0.3s ease;
+}
+
+.logo:hover span {
+    transform: translateY(-2px);
+}
+
+
+.sidebar {
+
+    width: 280px;
+    background: white;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+    padding: 20px 0;
+    position: fixed;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    border-radius: 10px 0 0 10px;
+    transition: all 0.3 ease;
+}
+
+.sidebar:hover {
+    box-shadow: 4px 0 20px rgba(0, 0, 0, 0.2);
+}
+
+.nav-menu {
+    margin-top: 70px;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    padding: 0 20px;
+}
+
+.nav-menu li {
+    margin-bottom: 15px;
+}
+
+.nav-menu a {
+    display: flex;
+    align-items: center;
+    padding: 12px 15px;
+    color: #555;
+    text-decoration: none;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.nav-menu a:hover {
+    background: #f0f4f8;
+    color: #4a76a8;
+    transform: translateX(10px);
+}
+
+.nav-menu a .icon {
+    margin-right: 12px;
+    width: 24px;
+    height: 24px;
+    opacity: 0.8;
+    transition: opacity 0.3 ease;
+}
+
+.nav-menu a:hover .icon {
+    opacity: 1;
+}
+
+/* Специальные стили для кнопки "Создать задачу" */
+.create-task {
+    margin-top: 30px;
+    background-color: #4a76a8;
+    color: white !important;
+    padding: 12px 15px;
+    text-align: center;
+    font-size: 16px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.3 ease;
+}
+
+.create-task:hover {
+    background-color: #5c89bd4f !important;
+    color: #4675aa !important;
+    transform: translateY(-3px);
+}
+
+/* Группа настроек и выхода */
+.bottom-menu {
+    margin-top: auto;
+    border-top: 1px solid #eee;
+    padding-top: 20px;
+}
+
+.bottom-menu a {
+    color: #777 !important;
+    padding: 10px 15px;
+    font-size: 14px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    transition: all 0.3s ease;
+}
+
+.bottom-menu a:hover {
+    background-color: #f0f4f8;
+    color: #4a76a8;
+}
+
+.bottom-menu a .icon {
+    margin-right: 10px;
+}
+
+.main-content {
+    flex: 1;
+    margin-left: 300px;
+    padding: 80px 30px 30px;
+}
+
+.create-task-header {
+    margin-bottom: 30px;
+}
+
+.create-task-header h1 {
+    font-size: 24px;
+    font-weight: 600;
+    color: #4a76a8;
+}
+
+.task-form-container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.task-form {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    padding: 30px;
+}
+
+.form-group {
+    margin-bottom: 25px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: #555;
+}
+
+.form-control {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 15px;
+    transition: border-color 0.3s ease;
+}
+
+.form-control:focus {
+    border-color: #4a76a8;
+    outline: none;
+}
+
+select.form-control {
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 1em;
+}
+
+textarea.form-control {
+    resize: vertical;
+    min-height: 100px;
+}
+
+.form-hint {
+    display: block;
+    margin-top: 5px;
+    font-size: 13px;
+    color: #999;
+}
+
+.file-upload-area {
+    border: 2px dashed #ddd;
+    border-radius: 6px;
+    padding: 20px;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.file-upload-area:hover {
+    border-color: #4a76a8;
+}
+
+.file-upload-label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    color: #777;
+}
+
+.file-upload-label i {
+    font-size: 48px;
+    margin-bottom: 10px;
+    color: #4a76a8;
+}
+
+.file-upload-label span {
+    font-size: 14px;
+}
+
+.file-preview-container {
+    margin-top: 15px;
+    text-align: left;
+}
+
+.file-preview-item {
+    display: flex;
+    align-items: center;
+    padding: 8px 10px;
+    background: #f5f7fa;
+    border-radius: 4px;
+    margin-bottom: 8px;
+}
+
+.file-preview-item i {
+    margin-right: 10px;
+    color: #4a76a8;
+}
+
+.file-preview-item span {
+    flex: 1;
+}
+
+.file-size {
+    color: #999;
+    font-size: 13px;
+    margin-left: 10px;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 30px;
+    gap: 15px;
+}
+
+.btn-cancel, .btn-create {
+    padding: 12px 25px;
+    border-radius: 6px;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-cancel {
+    background: #f5f7fa;
+    color: #555;
+    border: 1px solid #ddd;
+}
+
+.btn-cancel:hover {
+    background: #e6e9ed;
+}
+
+.btn-create {
+    background: #4a76a8;
+    color: white;
+    border: none;
+}
+
+.btn-create:hover {
+    background: #3a5f8a;
+    transform: translateY(-2px);
+}

@@ -1,0 +1,103 @@
+<!-- project_create.css -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskFlow - Создание проекта</title>
+    <link rel="stylesheet" href="../static/styles/project_create.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+   <link
+     href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap"
+     rel="stylesheet"
+   />
+   <link
+     rel="stylesheet"
+     href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css"
+   />
+</head>
+<body>
+    <header class="header">
+        <a class="logo" href="{{ url_for('taskflow.index') }}"><span>TaskFlow</span></a>
+    </header>
+
+    <aside class="sidebar">
+        <ul class="nav-menu">
+            <li><a href="#"><img class="icon" src="https://img.icons8.com/windows/32/search--v1.png" alt="search--v1"/>Поиск</a></li>
+            <li><a href="#"><img class="icon" src="https://img.icons8.com/windows/32/todo-list.png" alt="todo-list"/>Задачи</a></li>
+            <li><a href="#"><img class="icon" src="https://img.icons8.com/windows/32/flipboard.png" alt="flipboard"/>Проекты</a></li>
+            <li><a href="#"><img class="icon" src="https://img.icons8.com/windows/32/gender-neutral-user.png" alt="gender-neutral-user"/>Профиль</a></li>
+
+            <li><a href="{{ url_for('taskflow.task_create') }}" class="create-task"><img class="icon" src="https://img.icons8.com/windows/32/plus-math.png" alt="plus-math"/>Создать задачу</a></li>
+
+           <li><a href="{{ url_for('taskflow.create_project') }}" class="create-task"><img class="icon" src="https://img.icons8.com/windows/32/plus-math.png" alt="plus-math"/>Создать проект</a></li>
+        </ul>
+
+        <ul class="nav-menu bottom-menu">
+            <li><a href="#"><img class="icon" src="https://img.icons8.com/windows/32/help.png" alt="help"/>Помощь</a></li>
+            <li><a href="#"><img class="icon" src="https://img.icons8.com/windows/32/settings--v1.png" alt="settings--v1"/>Настройки</a></li>
+            <li><a href="{{ url_for('taskflow.logout') }}"><img class="icon" src="https://img.icons8.com/windows/32/exit.png" alt="exit"/>Выход</a></li>
+        </ul>
+    </aside>
+
+    <main class="main-content">
+        <div class="create-project-header">
+            <h1>Создать проект</h1>
+        </div>
+
+        <div class="project-form-container">
+            <form class="project-form" method="POST" action="{{ url_for('taskflow.create_project') }}">
+                <!-- Название проекта -->
+                <div class="form-group">
+                    <label for="project-name">Название проекта*</label>
+                    <input type="text" id="project-name" class="form-control" placeholder="Введите название проекта" required>
+                </div>
+
+                <!-- Описание проекта -->
+                <div class="form-group">
+                    <label for="project-description">Описание проекта</label>
+                    <textarea id="project-description" class="form-control" rows="5" placeholder="Опишите проект подробнее..."></textarea>
+                </div>
+
+                <!-- Участники проекта -->
+                <div class="form-group">
+                    <label for="project-participants">Участники проекта</label>
+                    <select id="project-participants" class="form-control" multiple>
+                        {% for user in users %}
+                            <option value="{{ user.id }}">{{ user.name }}</option>
+                        {% endfor %}
+                    </select>
+                    <small class="form-hint">Выберите участников проекта</small>
+                </div>
+
+                <!-- Менеджер проекта -->
+                <div class="form-group">
+                    <label for="project-manager">Менеджер проекта</label>
+                    <select id="project-manager" class="form-control">
+                        {% for user in users %}
+                            <option value="{{ user.id }}">{{ user.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Аналитик проекта -->
+                <div class="form-group">
+                    <label for="project-analyst">Аналитик проекта</label>
+                    <select id="project-analyst" class="form-control">
+                        {% for user in users %}
+                            <option value="{{ user.id }}">{{ user.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn-cancel">Отмена</button>
+                    <button type="submit" class="btn-create">Создать проект</button>
+                </div>
+            </form>
+        </div>
+    </main>
+
+</body>
+</html>

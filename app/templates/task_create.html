@@ -1,0 +1,146 @@
+<!-- task_create.html -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskFlow - Главная</title>
+    <link rel="stylesheet" href="../static/styles/task_create.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+   <link
+     href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap"
+     rel="stylesheet"
+   />
+   <link
+     rel="stylesheet"
+     href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css"
+   />
+</head>
+<body>
+    <header class="header">
+        <a class="logo" href="{{ url_for('taskflow.index') }}"><span>TaskFlow</span></a>
+    </header>
+
+    <aside class="sidebar">
+        <ul class="nav-menu">
+            <li><a href="#"><img class="icon" src="https://img.icons8.com/windows/32/search--v1.png" alt="search--v1"/>Поиск</a></li>
+            <li><a href="#"><img class="icon" src="https://img.icons8.com/windows/32/todo-list.png" alt="todo-list"/>Задачи</a></li>
+            <li><a href="#"><img class="icon" src="https://img.icons8.com/windows/32/flipboard.png" alt="flipboard"/>Проекты</a></li>
+            <li><a href="#"><img class="icon" src="https://img.icons8.com/windows/32/gender-neutral-user.png" alt="gender-neutral-user"/>Профиль</a></li>
+
+            <li><a href="{{ url_for('taskflow.task_create') }}" class="create-task"><img class="icon" src="https://img.icons8.com/windows/32/plus-math.png" alt="plus-math"/>Создать задачу</a></li>
+
+            <li><a href="{{ url_for('taskflow.create_project') }}" class="create-task"><img class="icon" src="https://img.icons8.com/windows/32/plus-math.png" alt="plus-math"/>Создать проект</a></li>
+        </ul>
+
+        <ul class="nav-menu bottom-menu">
+            <li><a href="#"><img class="icon" src="https://img.icons8.com/windows/32/help.png" alt="help"/>Помощь</a></li>
+            <li><a href="#"><img class="icon" src="https://img.icons8.com/windows/32/settings--v1.png" alt="settings--v1"/>Настройки</a></li>
+            <li><a href="{{ url_for('taskflow.logout') }}"><img class="icon" src="https://img.icons8.com/windows/32/exit.png" alt="exit"/>Выход</a></li>
+        </ul>
+    </aside>
+
+    <main class="main-content">
+        <div class="create-task-header">
+            <h1>Создать задачу</h1>
+        </div>
+
+        <div class="task-form-container">
+            <form class="task-form">
+                <div class="form-group">
+                    <label for="project">Проект</label>
+                    <select id="project" class="form-control">
+                        <option value="" selected>Не выбран</option>
+                        <option value="project1">Проект 1</option>
+                        <option value="project2">Проект 2</option>
+                        <option value="project3">Проект 3</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="task-name">Название задачи*</label>
+                    <input type="text" id="task-name" class="form-control" placeholder="Введите название задачи" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="executors">Исполнители</label>
+                    <select id="executors" class="form-control" multiple>
+                        <option value="user1">Иван Иванов</option>
+                        <option value="user2">Петр Петров</option>
+                        <option value="user3">Сергей Сергеев</option>
+                        <option value="user4">Анна Аннова</option>
+                    </select>
+                    <small class="form-hint">Выберите одного или нескольких исполнителей</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="deadline">Срок выполнения</label>
+                    <input type="date" id="deadline" class="form-control">
+                </div>
+
+                <div class="form-group">
+                    <label for="description">Описание задачи</label>
+                    <textarea id="description" class="form-control" rows="5" placeholder="Опишите задачу подробнее..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Прикрепленные файлы</label>
+                    <div class="file-upload-area">
+                        <input type="file" id="file-upload" multiple style="display: none;">
+                        <label for="file-upload" class="file-upload-label">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <span>Перетащите файлы сюда или нажмите для выбора</span>
+                        </label>
+                        <div class="file-preview-container" id="file-preview">
+                            <!-- Здесь будут отображаться превью загруженных файлов -->
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn-cancel">Отмена</button>
+                    <button type="submit" class="btn-create">Создать задачу</button>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <script>
+        // Обработка загрузки файлов
+        document.getElementById('file-upload').addEventListener('change', function(e) {
+            const filePreview = document.getElementById('file-preview');
+            filePreview.innerHTML = '';
+
+            for (let file of e.target.files) {
+                const fileElement = document.createElement('div');
+                fileElement.className = 'file-preview-item';
+
+                const fileIcon = document.createElement('i');
+                fileIcon.className = 'fas fa-file';
+
+                const fileName = document.createElement('span');
+                fileName.textContent = file.name;
+
+                const fileSize = document.createElement('span');
+                fileSize.className = 'file-size';
+                fileSize.textContent = formatFileSize(file.size);
+
+                fileElement.appendChild(fileIcon);
+                fileElement.appendChild(fileName);
+                fileElement.appendChild(fileSize);
+                filePreview.appendChild(fileElement);
+            }
+        });
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+    </script>
+
+</body>
+</html>
