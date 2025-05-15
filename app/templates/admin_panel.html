@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskFlow - Админ панель</title>
+    <link rel="stylesheet" href="../static/styles/admin.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap"
+          rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+<header class="header">
+    <a class="logo" href="{{ url_for('taskflow.index') }}"><span>TaskFlow</span></a>
+</header>
+
+<aside class="sidebar">
+    <ul class="nav-menu">
+        <li><a href="{{ url_for('taskflow.index') }}"><i class="fas fa-arrow-left"></i> На главную</a></li>
+    </ul>
+</aside>
+
+<main class="main-content">
+    <div class="admin-header">
+        <h1><i class="fas fa-lock"></i> Административная панель</h1>
+    </div>
+
+    <div class="admin-section">
+        <h2><i class="fas fa-database"></i> Резервное копирование базы данных</h2>
+
+        <form id="backupForm" class="backup-form">
+            <div class="form-group">
+                <label for="backupPath">Путь для сохранения резервной копии:</label>
+                <input type="text" id="backupPath" name="backupPath"
+                       placeholder="Например: C:\backups\taskflow" required>
+                <small class="path-hint">Примеры: C:\backups\taskflow или .\backups</small>
+            </div>
+
+            <div class="form-group">
+                <label for="backupName">Имя файла (без расширения):</label>
+                <input type="text" id="backupName" name="backupName"
+                       placeholder="Например: taskflow_backup" required>
+            </div>
+
+            <button type="submit" class="btn-backup">
+                <i class="fas fa-save"></i> Создать резервную копию
+            </button>
+        </form>
+
+        <div id="backupStatus" class="backup-status hidden"></div>
+    </div>
+</main>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const backupForm = document.getElementById('backupForm');
+        const backupStatus = document.getElementById('backupStatus');
+
+        backupForm.addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const formData = {
+                path: document.getElementById('backupPath').value.trim(),
+                name: document.getElementById('backupName').value.trim()
+            };
+
+            if (!formData.path || !formData.name) {
+                backupStatus.textContent = 'Заполните все поля';
+                backupStatus.className = 'backup-status error';
+                backupStatus.classList.remove('hidden');
+                return;
+            }
+
+            try {
+                backupStatus.textContent = 'Создание резервной копии...';
+                backupStatus.className = 'backup-status processing';
+                backupStatus.classList.remove('hidden');
+
+                const response = await fetch('/admin/create_backup', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    backupStatus.textContent = `Резервная копия успешно создана: ${result.file_path}`;
+                    backupStatus.className = 'backup-status success';
+                } else {
+                    backupStatus.textContent = `Ошибка: ${result.error}`;
+                    backupStatus.className = 'backup-status error';
+                }
+            } catch (error) {
+                backupStatus.textContent = `Ошибка сети: ${error.message}`;
+                backupStatus.className = 'backup-status error';
+            }
+        });
+    });
+</script>
+</body>
+</html>

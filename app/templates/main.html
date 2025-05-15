@@ -28,7 +28,12 @@
             <li><a href="{{ url_for('taskflow.tasks') }}"><img class="icon" src="https://img.icons8.com/windows/32/todo-list.png" alt="todo-list"/>Задачи</a></li>
             <li><a href="{{ url_for('taskflow.projects') }}"><img class="icon" src="https://img.icons8.com/windows/32/flipboard.png" alt="flipboard"/>Проекты</a></li>
             <li><a href="#"><img class="icon" src="https://img.icons8.com/windows/32/gender-neutral-user.png" alt="gender-neutral-user"/>Профиль</a></li>
-
+            {% if current_user.is_admin %}
+                <li><a href="{{ url_for('taskflow.admin_panel') }}"><i class="fas fa-lock"></i> Резервная копия </a></li>
+            {% endif %}
+            {% if current_user.is_admin %}
+                <li><a href="{{ url_for('taskflow.reports_dashboard') }}"><i class="fas fa-lock"></i> Отчеты </a></li>
+            {% endif %}
             <li><a href="{{ url_for('taskflow.create_task') }}" class="create-task"><img class="icon" src="https://img.icons8.com/windows/32/plus-math.png" alt="plus-math"/>Создать задачу</a></li>
 
             <li><a href="{{ url_for('taskflow.create_project') }}" class="create-task"><img class="icon" src="https://img.icons8.com/windows/32/plus-math.png" alt="plus-math"/>Создать проект</a></li>
@@ -67,7 +72,7 @@
                     <h3><i class="fas fa-user-tie"></i> Я автор</h3>
                     {% if manager_tasks %}
                         {% for task in manager_tasks[:3] %}
-                        <div class="task-item">
+                        <a href="{{ url_for('taskflow.task_details', id=task.id) }}" class="task-item">
                             <div class="task-title">{{ task.title }}</div>
                             <div class="task-meta">
                                 <span class="task-status {{ task.status.lower().replace(' ', '-') }}">
@@ -75,10 +80,10 @@
                                 </span>
                                 <span class="task-project">{{ task.project.name }}</span>
                             </div>
-                        </div>
+                        </a>
                         {% endfor %}
                         {% if manager_tasks|length > 3 %}
-                        <div class="more-tasks">+{{ manager_tasks|length - 3 }} ещё</div>
+                        <a href="{{ url_for('taskflow.tasks') }}" class="more-tasks">+{{ manager_tasks|length - 3 }} ещё</a>
                         {% endif %}
                     {% else %}
                         <p class="empty-tasks">Нет задач, где вы автор</p>
@@ -89,7 +94,7 @@
                     <h3><i class="fas fa-user-check"></i> Я исполнитель</h3>
                     {% if executor_tasks %}
                         {% for task in executor_tasks[:3] %}
-                        <div class="task-item">
+                        <a href="{{ url_for('taskflow.task_details', id=task.id) }}" class="task-item">
                             <div class="task-title">{{ task.title }}</div>
                             <div class="task-meta">
                                 <span class="task-status {{ task.status.lower().replace(' ', '-') }}">
@@ -97,10 +102,10 @@
                                 </span>
                                 <span class="task-project">{{ task.project.name }}</span>
                             </div>
-                        </div>
+                        </a>
                         {% endfor %}
                         {% if executor_tasks|length > 3 %}
-                        <div class="more-tasks">+{{ executor_tasks|length - 3 }} ещё</div>
+                        <a href="{{ url_for('taskflow.tasks') }}" class="more-tasks">+{{ executor_tasks|length - 3 }} ещё</a>
                         {% endif %}
                     {% else %}
                         <p class="empty-tasks">Нет задач, где вы исполнитель</p>
@@ -119,7 +124,7 @@
 
             <div class="projects-grid">
                 {% for project in user_projects[:6] %}
-                <div class="project-card">
+                <a href="{{ url_for('taskflow.board', project_id=project.id) }}" class="project-card">
                     <h3>{{ project.name }}</h3>
                     <p class="project-description">
                         {{ project.description|truncate(100) if project.description else "Нет описания" }}
@@ -134,13 +139,13 @@
                         </span>
                         {% endif %}
                     </div>
-                </div>
+                </a>
                 {% endfor %}
                 {% if user_projects|length > 6 %}
-                <div class="project-card more-projects">
+                <a href="{{ url_for('taskflow.projects') }}" class="project-card more-projects">
                     <h3>+{{ user_projects|length - 6 }} проектов</h3>
                     <p>Показать все проекты</p>
-                </div>
+                </a>
                 {% endif %}
             </div>
         </div>
@@ -171,15 +176,15 @@
             });
         });
 
-        // Клик по карточке проекта
-        document.querySelectorAll('.project-card').forEach(card => {
-            card.addEventListener('click', function() {
-                const projectId = this.dataset.projectId;
-                if (projectId) {
-                    window.location.href = `/board/${projectId}`;
-                } else if (this.classList.contains('more-projects')) {
-                    window.location.href = "{{ url_for('taskflow.projects') }}";
-                }
+        // Добавляем эффект при наведении на карточки
+        document.querySelectorAll('.task-item, .project-card').forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-3px)';
+                this.style.boxShadow = '0 4px 8px rgba(0,0,0,0.1)';
+            });
+            card.addEventListener('mouseleave', function() {
+                this.style.transform = '';
+                this.style.boxShadow = '';
             });
         });
     });

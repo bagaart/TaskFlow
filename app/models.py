@@ -35,6 +35,10 @@ class User(db.Model, UserMixin):
     def __repr__(self):
         return f'<User {self.name}>'
 
+    @property
+    def is_admin(self):
+        return self.name == 'admin'
+
 
 class Task(db.Model):
     __tablename__ = "task"
@@ -60,7 +64,7 @@ class Task(db.Model):
     change_history = db.relationship('ChangeHistory', back_populates='task', lazy=True)
     executors_link = db.relationship('TaskExecutor', back_populates='task', cascade='all, delete-orphan')
     executors = db.relationship('User', secondary='task_executor', back_populates='assigned_tasks')
-
+    comments = db.relationship('Comment', back_populates='task', lazy=True, cascade="all, delete-orphan")
     def __repr__(self):
         return f'<Task {self.title}>'
 
@@ -147,7 +151,6 @@ class TaskCard(db.Model):
     # Relationships
     task = db.relationship('Task', back_populates='task_card')
     kanban_board = db.relationship('KanbanBoard', back_populates='task_cards')
-    comments = db.relationship('Comment', back_populates='task_card', lazy=True, cascade="all, delete-orphan")
     attached_files = db.relationship('AttachedFile', back_populates='task_card', lazy=True, cascade="all, delete-orphan")
 
     def __repr__(self):
@@ -163,11 +166,10 @@ class Comment(db.Model):
 
     # Foreign keys
     author_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    task_card_id = db.Column(db.Integer, db.ForeignKey('task_card.id'), nullable=False)
-
+    task_id = db.Column(db.Integer, db.ForeignKey('task.id'), nullable=False)
+    task = db.relationship('Task', back_populates='comments')
     # Relationships
     author = db.relationship('User', back_populates='comments')
-    task_card = db.relationship('TaskCard', back_populates='comments')
 
     def __repr__(self):
         return f'<Comment {self.content[:30]}>'
@@ -215,12 +217,20 @@ class Report(db.Model):
     __tablename__ = "report"
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    timestamp = db.Column(db.DateTime, default=db.func.now())
-    backup_path = db.Column(db.String(1024), nullable=False)
-    description = db.Column(db.Text)
+    report_type = db.Column(db.String(50), nullable=False)  # 'backup', 'tasks', 'projects', 'users'
+    format = db.Column(db.String(10), default='json')  # Добавляем поле для формата
+    parameters = db.Column(db.JSON)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    completed_at = db.Column(db.DateTime)
+    status = db.Column(db.String(20), default='pending')
+    file_path = db.Column(db.String(255))
+    error_message = db.Column(db.Text)
+    generator_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+
+    generator = db.relationship('User', backref='reports')
 
     def __repr__(self):
-        return f'<Report {self.timestamp}>'
+        return f'<Report {self.report_type} {self.timestamp}>'
 
 
 class ChangeHistory(db.Model):

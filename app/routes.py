@@ -1,12 +1,22 @@
 # app/routes.py
+import json
+import os
+import shutil
+import subprocess
+import tempfile
+from pathlib import Path
 
-from flask import render_template, redirect, url_for, flash, Blueprint, request, abort
+from flask import render_template, redirect, url_for, flash, Blueprint, request, abort, current_app, send_from_directory
 from flask_login import current_user, login_user, login_required, logout_user
+
 from app.forms import RegisterForm, LoginForm
-from app.models import User, db, ProjectUser, Project, Task, TaskExecutor
+from app.models import User, db, ProjectUser, Project, Task, TaskExecutor, Comment, Report
 from flask import jsonify
 from datetime import datetime
 
+from fpdf import FPDF
+from datetime import datetime
+import tempfile
 bp = Blueprint('taskflow', __name__)
 
 
@@ -495,4 +505,578 @@ def task_details(id):
         manager=manager,
         executors=executors,
         current_user=current_user
+    )
+
+
+# Добавим эти endpoint'ы в routes.py
+
+@bp.route('/api/task/<int:task_id>/comments', methods=['GET'])
+@login_required
+def get_task_comments(task_id):
+    task = Task.query.get_or_404(task_id)
+
+    # Проверка прав доступа
+    if not any(p.id == task.project_id for p in current_user.projects):
+        abort(403)
+
+    # Получаем комментарии для задачи
+    comments = []
+    for comment in task.comments:
+        comments.append({
+            'id': comment.id,
+            'content': comment.content,
+            'timestamp': comment.timestamp.strftime('%d.%m.%Y %H:%M'),
+            'author': {
+                'id': comment.author.id,
+                'name': comment.author.name,
+                'email': comment.author.email
+            }
+        })
+
+    return jsonify({'comments': comments})
+
+
+@bp.route('/api/task/<int:task_id>/comments', methods=['POST'])
+@login_required
+def add_task_comment(task_id):
+    task = Task.query.get_or_404(task_id)
+
+    # Проверка прав доступа
+    if not any(p.id == task.project_id for p in current_user.projects):
+        abort(403)
+
+    data = request.get_json()
+    content = data.get('content')
+
+    if not content:
+        return jsonify({'error': 'Текст комментария не может быть пустым'}), 400
+
+    # Создаем новый комментарий
+    new_comment = Comment(
+        content=content,
+        author_id=current_user.id,
+        task_id=task_id
+    )
+
+    db.session.add(new_comment)
+    db.session.commit()
+
+    return jsonify({
+        'id': new_comment.id,
+        'content': new_comment.content,
+        'timestamp': new_comment.timestamp.strftime('%d.%m.%Y %H:%M'),
+        'author': {
+            'id': current_user.id,
+            'name': current_user.name,
+            'email': current_user.email
+        }
+    }), 201
+
+
+@bp.route('/admin')
+@login_required
+def admin_panel():
+    if not current_user.is_admin:
+        abort(403)
+    return render_template('admin_panel.html')
+
+
+@bp.route('/admin/create_backup', methods=['POST'])
+@login_required
+def create_backup():
+    if not current_user.is_admin:
+        abort(403)
+
+    data = request.get_json()
+    backup_dir = data.get('path')
+    backup_name = data.get('name')
+
+    if not backup_dir or not backup_name:
+        return jsonify({'error': 'Не указаны путь или имя резервной копии'}), 400
+
+    try:
+        # Нормализуем путь для Windows
+        backup_dir = os.path.normpath(backup_dir)
+
+        # Создаем папку для резервных копий, если её нет
+        Path(backup_dir).mkdir(parents=True, exist_ok=True)
+        test_file = os.path.join(backup_dir, '.write_test')
+        try:
+            with open(test_file, 'w') as f:
+                f.write("test")
+            os.remove(test_file)
+        except PermissionError:
+            return "Нет прав на запись в указанную папку", 403
+
+        # Формируем имя файла с датой
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        backup_filename = f"{backup_name}_{timestamp}.sql"
+        backup_path = os.path.join(backup_dir, backup_filename)
+
+        # Получаем параметры подключения из конфига Flask
+        db_uri = current_app.config['SQLALCHEMY_DATABASE_URI']
+
+        # Парсим параметры подключения
+        from urllib.parse import urlparse
+        parsed = urlparse(db_uri)
+
+        db_name = parsed.path[1:]  # убираем первый слэш
+        db_user = parsed.username
+        db_password = parsed.password
+        db_host = parsed.hostname
+        db_port = parsed.port or 5432  # стандартный порт PostgreSQL
+
+        # Формируем команду pg_dump
+        pg_dump_cmd = [
+            r"C:\Program Files\PostgreSQL\16\bin\pg_dump.exe",
+            '-h', db_host,
+            '-p', str(db_port),
+            '-U', db_user,
+            '-d', db_name,
+            '-f', backup_path
+        ]
+
+        # Устанавливаем переменную окружения с паролем
+        env = os.environ.copy()
+        env['PGPASSWORD'] = db_password
+
+        # Выполняем команду
+        subprocess.run(pg_dump_cmd, env=env, check=True)
+
+        # Логируем действие
+        report = Report(
+            timestamp=datetime.now(),
+            backup_path=backup_path,
+            description=f"Резервная копия создана администратором {current_user.name}"
+        )
+        db.session.add(report)
+        db.session.commit()
+
+        return jsonify({
+            'success': True,
+            'file_path': backup_path
+        })
+
+    except subprocess.CalledProcessError as e:
+        return jsonify({
+            'error': f'Ошибка при создании SQL-дампа: {str(e)}'
+        }), 500
+    except Exception as e:
+        return jsonify({
+            'error': f'Ошибка при создании резервной копии: {str(e)}'
+        }), 500
+
+
+@bp.route('/admin/reports')
+@login_required
+def reports_dashboard():
+    if not current_user.is_admin:
+        abort(403)
+
+    reports = Report.query.order_by(Report.timestamp.desc()).limit(50).all()
+    return render_template('reports_dashboard.html', reports=reports)
+
+
+@bp.route('/admin/generate_report', methods=['POST'])
+@login_required
+def generate_report():
+    if not current_user.is_admin:
+        abort(403)
+
+    data = request.get_json()
+    report_type = data.get('type')
+    format_type = data.get('format', 'json')  # Добавляем параметр формата
+    parameters = data.get('parameters', {})
+
+    if not report_type:
+        return jsonify({'error': 'Не указан тип отчета'}), 400
+
+    try:
+        # Создаем запись о отчете
+        report = Report(
+            report_type=report_type,
+            format=format_type,  # Сохраняем формат отчета
+            parameters=parameters,
+            generator_id=current_user.id,
+            status='pending'
+        )
+        db.session.add(report)
+        db.session.commit()
+
+        # Запускаем генерацию отчета в фоне
+        generate_report_background(report.id)
+
+        return jsonify({
+            'success': True,
+            'report_id': report.id
+        })
+
+    except Exception as e:
+        return jsonify({
+            'error': f'Ошибка при создании отчета: {str(e)}'
+        }), 500
+
+
+def generate_report_background(report_id):
+    from app import create_app
+    app = create_app()
+
+    with app.app_context():
+        report = Report.query.get(report_id)
+        if not report:
+            return
+
+        try:
+            # Создаем директорию для отчетов, если ее нет
+            reports_dir = os.path.join(app.instance_path, 'reports')
+            os.makedirs(reports_dir, exist_ok=True)
+
+            filename = f"{report.report_type}_{report.id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+
+            if report.report_type == 'tasks':
+                # Генерация отчета по задачам
+                tasks = Task.query.all()
+                report_data = [{
+                    'id': t.id,
+                    'title': t.title,
+                    'status': t.status,
+                    'project': t.project.name if t.project else None,
+                    'created_at': t.created_at.strftime('%d.%m.%Y %H:%M') if t.created_at else None,
+                    'deadline': t.deadline.strftime('%d.%m.%Y') if t.deadline else None,
+                    'manager': t.manager.name if t.manager else None,
+                    'executors': ', '.join([e.name for e in t.executors])
+                } for t in tasks]
+
+                if report.format == 'pdf':
+                    file_path = os.path.join(reports_dir, f"{filename}.pdf")
+                    generate_pdf_report(
+                        title=f"Отчет по задачам",
+                        data=report_data,
+                        filename=file_path,
+                        columns=[
+                            ('ID', 'id', 10),
+                            ('Название', 'title', 50),
+                            ('Статус', 'status', 20),
+                            ('Проект', 'project', 30),
+                            ('Дата создания', 'created_at', 25),
+                            ('Дедлайн', 'deadline', 20),
+                            ('Менеджер', 'manager', 30),
+                            ('Исполнители', 'executors', 40)
+                        ]
+                    )
+                else:
+                    file_path = os.path.join(reports_dir, f"{filename}.json")
+                    with open(file_path, 'w', encoding='utf-8') as f:
+                        json.dump(report_data, f, ensure_ascii=False, indent=2)
+
+            elif report.report_type == 'projects':
+                # Генерация отчета по проектам
+                projects = Project.query.all()
+                report_data = []
+                for p in projects:
+                    project_data = {
+                        'id': p.id,
+                        'name': p.name,
+                        'description': p.description,
+                        'created_at': p.created_at.strftime('%d.%m.%Y %H:%M') if p.created_at else None,
+                        'deadline': p.deadline.strftime('%d.%m.%Y') if p.deadline else None,
+                        'total_tasks': len(p.tasks),
+                        'tasks_by_status': {
+                            'todo': len([t for t in p.tasks if t.status == 'To Do']),
+                            'in_progress': len([t for t in p.tasks if t.status == 'In Progress']),
+                            'done': len([t for t in p.tasks if t.status == 'Done'])
+                        },
+                        'participants': ', '.join(
+                            [f"{u.name} ({pu.role})" for u, pu in zip(p.users, p.user_associations)])
+                    }
+                    report_data.append(project_data)
+
+                if report.format == 'pdf':
+                    file_path = os.path.join(reports_dir, f"{filename}.pdf")
+                    generate_pdf_report(
+                        title=f"Отчет по проектам",
+                        data=report_data,
+                        filename=file_path,
+                        columns=[
+                            ('ID', 'id', 10),
+                            ('Название', 'name', 40),
+                            ('Описание', 'description', 60),
+                            ('Дата создания', 'created_at', 25),
+                            ('Дедлайн', 'deadline', 20),
+                            ('Всего задач', 'total_tasks', 20),
+                            ('Участники', 'participants', 60)
+                        ],
+                        charts=[
+                            {
+                                'type': 'pie',
+                                'data': {
+                                    'labels': ['To Do', 'In Progress', 'Done'],
+                                    'values': [
+                                        sum(p['tasks_by_status']['todo'] for p in report_data),
+                                        sum(p['tasks_by_status']['in_progress'] for p in report_data),
+                                        sum(p['tasks_by_status']['done'] for p in report_data)
+                                    ],
+                                    'title': 'Распределение задач по статусам'
+                                }
+                            }
+                        ]
+                    )
+                else:
+                    file_path = os.path.join(reports_dir, f"{filename}.json")
+                    with open(file_path, 'w', encoding='utf-8') as f:
+                        json.dump(report_data, f, ensure_ascii=False, indent=2)
+
+            elif report.report_type == 'users':
+                # Генерация отчета по пользователям
+                users = User.query.all()
+                report_data = []
+                for u in users:
+                    user_data = {
+                        'id': u.id,
+                        'name': u.name,
+                        'email': u.email,
+                        'total_projects': len(u.projects),
+                        'total_tasks_assigned': len(u.assigned_tasks),
+                        'tasks_by_status': {
+                            'todo': len([t for t in u.assigned_tasks if t.status == 'To Do']),
+                            'in_progress': len([t for t in u.assigned_tasks if t.status == 'In Progress']),
+                            'done': len([t for t in u.assigned_tasks if t.status == 'Done'])
+                        }
+                    }
+                    report_data.append(user_data)
+
+                if report.format == 'pdf':
+                    file_path = os.path.join(reports_dir, f"{filename}.pdf")
+                    generate_pdf_report(
+                        title=f"Отчет по пользователям",
+                        data=report_data,
+                        filename=file_path,
+                        columns=[
+                            ('ID', 'id', 10),
+                            ('Имя', 'name', 30),
+                            ('Email', 'email', 50),
+                            ('Дата регистрации', 'registration_date', 25),
+                            ('Последний вход', 'last_login', 25),
+                            ('Проектов', 'total_projects', 20),
+                            ('Задач', 'total_tasks_assigned', 20)
+                        ],
+                        charts=[
+                            {
+                                'type': 'bar',
+                                'data': {
+                                    'labels': [u['name'] for u in report_data],
+                                    'values': [u['total_tasks_assigned'] for u in report_data],
+                                    'title': 'Количество задач на пользователя'
+                                }
+                            }
+                        ]
+                    )
+                else:
+                    file_path = os.path.join(reports_dir, f"{filename}.json")
+                    with open(file_path, 'w', encoding='utf-8') as f:
+                        json.dump(report_data, f, ensure_ascii=False, indent=2)
+
+            # Обновляем отчет
+            report.file_path = file_path
+            report.status = 'completed'
+            report.completed_at = datetime.now()
+            db.session.commit()
+
+        except Exception as e:
+            report.status = 'failed'
+            report.error_message = str(e)
+            db.session.commit()
+            app.logger.error(f"Failed to generate report {report.id}: {str(e)}")
+
+
+def generate_pdf_report(title, data, filename, columns, charts=None):
+    import matplotlib
+    matplotlib.use('Agg')
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+    from fpdf.enums import XPos, YPos
+    import tempfile
+    import os
+    import numpy as np
+
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_auto_page_break(auto=True, margin=25)
+
+    # Добавляем шрифты с проверкой
+    fonts_dir = os.path.join(os.path.dirname(__file__), 'fonts')
+    try:
+        pdf.add_font('DejaVu', '', os.path.join(fonts_dir, 'DejaVuSansCondensed.ttf'), uni=True)
+        pdf.add_font('DejaVu', 'B', os.path.join(fonts_dir, 'DejaVuSansCondensed-Bold.ttf'), uni=True)
+    except Exception as e:
+        print(f"Font loading error: {e}")
+        return
+
+    # Заголовок
+    pdf.set_font('DejaVu', 'B', 16)
+    pdf.cell(0, 10, title, new_x=XPos.LMARGIN, new_y=YPos.NEXT, align='C')
+    pdf.ln(10)
+
+    # Дата генерации
+    pdf.set_font('DejaVu', '', 10)
+    pdf.cell(0, 5, f"Сгенерировано: {datetime.now().strftime('%d.%m.%Y %H:%M')}",
+             new_x=XPos.LMARGIN, new_y=YPos.NEXT, align='R')
+    pdf.ln(10)
+
+    # Расчет ширины столбцов
+    col_widths = []
+    pdf.set_font('DejaVu', 'B', 12)
+    for col in columns:
+        max_width = pdf.get_string_width(col[0]) + 8  # Минимальная ширина заголовка
+
+        # Проверяем все данные
+        for row in data:
+            value = str(row.get(col[1], ''))
+            lines = value.split('\n')
+            for line in lines:
+                cell_width = pdf.get_string_width(line) + 8
+                if cell_width > max_width:
+                    max_width = cell_width
+
+        col_widths.append(max_width)
+
+    # Автоматическое масштабирование
+    total_width = sum(col_widths)
+    if total_width > pdf.epw:
+        scale_factor = pdf.epw / total_width * 0.95  # Небольшой запас
+        col_widths = [w * scale_factor for w in col_widths]
+
+    # Заголовки таблицы
+    pdf.set_fill_color(220, 220, 220)
+    pdf.set_font('DejaVu', 'B', 12)
+    for i, col in enumerate(columns):
+        pdf.cell(col_widths[i], 10, col[0], border=1, align='C', fill=True)
+    pdf.ln()
+
+    # Данные таблицы
+    pdf.set_font('DejaVu', '', 10)
+    fill = False
+
+    for row in data:
+        # Определяем высоту строки
+        line_heights = []
+        for i, col in enumerate(columns):
+            value = str(row.get(col[1], ''))
+            lines = pdf.multi_cell(col_widths[i], 5, value, border=0, align='L',
+                                   split_only=True)
+            line_heights.append(len(lines))
+
+        row_height = max(line_heights) * 6  # Высота строки с учетом всех ячеек
+
+        # Проверка на выход за границы страницы
+        if pdf.get_y() + row_height > pdf.page_break_trigger:
+            pdf.add_page()
+            # Повторяем заголовки
+            pdf.set_font('DejaVu', 'B', 12)
+            for i, col in enumerate(columns):
+                pdf.cell(col_widths[i], 10, col[0], border=1, align='C', fill=True)
+            pdf.ln()
+            pdf.set_font('DejaVu', '', 10)
+
+        # Рисуем строку
+        y_start = pdf.get_y()
+        pdf.set_fill_color(245 if fill else 255)
+        for i, col in enumerate(columns):
+            value = str(row.get(col[1], ''))
+            x = pdf.get_x()
+            y = y_start
+
+            # Ячейка с фоном
+            pdf.set_xy(x, y)
+            pdf.cell(col_widths[i], row_height, '', border=1, fill=fill)
+
+            # Текст в ячейке
+            pdf.set_xy(x + 2, y + 2)
+            pdf.multi_cell(col_widths[i] - 4, 5, value, border=0, align='L')
+
+            pdf.set_x(x + col_widths[i])
+
+        pdf.set_y(y_start + row_height)
+        fill = not fill  # Чередуем цвет фона
+
+    # Графики
+    if charts:
+        pdf.add_page()
+        pdf.set_font('DejaVu', 'B', 14)
+        pdf.cell(0, 10, "Визуализация данных", 0, 1, 'C')
+        pdf.ln(10)
+
+        for chart in charts:
+            with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as tmpfile:
+                try:
+                    plt.figure(figsize=(8, 5), dpi=100)  # Уменьшаем размер и DPI для лучшего качества
+
+                    if chart['type'] == 'pie':
+                        plt.pie(
+                            chart['data']['values'],
+                            labels=chart['data']['labels'],
+                            autopct='%1.1f%%',
+                            startangle=90,
+                            textprops={'fontsize': 8}  # Уменьшаем размер шрифта
+                        )
+                        plt.title(chart['data']['title'], fontsize=10)
+                        plt.tight_layout()
+
+                    elif chart['type'] == 'bar':
+                        sns.set(font_scale=0.8)  # Уменьшаем размер шрифта
+                        barplot = sns.barplot(
+                            x=chart['data']['labels'],
+                            y=chart['data']['values']
+                        )
+                        plt.title(chart['data']['title'], fontsize=10)
+                        plt.xticks(rotation=45, ha='right', fontsize=8)
+                        plt.yticks(fontsize=8)
+
+                        # Добавляем значения на столбцы
+                        for p in barplot.patches:
+                            barplot.annotate(
+                                format(p.get_height(), '.1f'),
+                                (p.get_x() + p.get_width() / 2., p.get_height()),
+                                ha='center', va='center',
+                                xytext=(0, 5),
+                                textcoords='offset points',
+                                fontsize=8
+                            )
+
+                        plt.tight_layout()
+
+                    plt.savefig(tmpfile.name, bbox_inches='tight', dpi=150)  # Уменьшаем DPI
+                    plt.close()
+
+                    # Добавляем график в PDF
+                    pdf.set_font('DejaVu', '', 12)
+                    pdf.cell(0, 10, chart['data']['title'], 0, 1, 'C')
+                    pdf.image(tmpfile.name, x=10, y=None, w=180)
+                    pdf.ln(10)
+
+                finally:
+                    try:
+                        os.unlink(tmpfile.name)
+                    except:
+                        pass
+
+    pdf.output(filename)
+@bp.route('/admin/download_report/<int:report_id>')
+@login_required
+def download_report(report_id):
+    if not current_user.is_admin:
+        abort(403)
+
+    report = Report.query.get_or_404(report_id)
+    if not report.file_path or not os.path.exists(report.file_path):
+        abort(404)
+
+    # Определяем MIME-тип в зависимости от формата отчета
+    mimetype = 'application/pdf' if report.format == 'pdf' else 'application/json'
+
+    return send_from_directory(
+        directory=os.path.dirname(report.file_path),
+        path=os.path.basename(report.file_path),
+        as_attachment=True,
+        mimetype=mimetype
     )

@@ -317,17 +317,17 @@ body {
     margin-left: 0.5rem;
 }
 
-.task-priority.high {
+.task-priority.высокий {
     background: #ffebee;
     color: #c62828;
 }
 
-.task-priority.medium {
+.task-priority.средний {
     background: #fff3e0;
     color: #ef6c00;
 }
 
-.task-priority.low {
+.task-priority.низкий {
     background: #e8f5e9;
     color: #2e7d32;
 }

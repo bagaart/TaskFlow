@@ -304,27 +304,41 @@ async function loadPeopleData(taskId) {
 
 // Загрузка комментариев
 async function loadComments(taskId) {
-    // В реальном приложении здесь был бы запрос к API
-    // Для примера используем заглушку
-    setTimeout(() => {
+    try {
+        const response = await fetch(`/api/task/${taskId}/comments`);
+        if (!response.ok) throw new Error('Ошибка загрузки комментариев');
+
+        const data = await response.json();
         const commentsList = document.getElementById('commentsList');
-        commentsList.innerHTML = `
-            <div class="comment">
-                <div class="comment-author">
-                    <div class="author-avatar" style="background-color: #4a76a8">
-                        <i class="fas fa-user"></i>
+        commentsList.innerHTML = '';
+
+        if (data.comments && data.comments.length > 0) {
+            data.comments.forEach(comment => {
+                const commentElement = document.createElement('div');
+                commentElement.className = 'comment';
+                commentElement.innerHTML = `
+                    <div class="comment-author">
+                        <div class="author-avatar" style="background-color: ${getRandomColor(comment.author.id)}">
+                            ${comment.author.name.charAt(0).toUpperCase()}
+                        </div>
+                        <div class="author-info">
+                            <h4>${comment.author.name}</h4>
+                            <span class="comment-date">${comment.timestamp}</span>
+                        </div>
                     </div>
-                    <div class="author-info">
-                        <h4>Иван Иванов</h4>
-                        <span class="comment-date">Сегодня в 14:30</span>
+                    <div class="comment-text">
+                        ${comment.content}
                     </div>
-                </div>
-                <div class="comment-text">
-                    Пример комментария. Здесь будет текст, который оставил пользователь.
-                </div>
-            </div>
-        `;
-    }, 500);
+                `;
+                commentsList.appendChild(commentElement);
+            });
+        } else {
+            commentsList.innerHTML = '<div class="comment-placeholder">Пока нет комментариев</div>';
+        }
+    } catch (error) {
+        console.error('Ошибка загрузки комментариев:', error);
+        showError('Не удалось загрузить комментарии');
+    }
 }
 
 // Настройка обработчиков событий
@@ -445,33 +459,19 @@ async function addComment(taskId) {
     if (!commentText) return;
 
     try {
-        // В реальном приложении здесь был бы запрос к API
-        // Для примера просто добавляем комментарий локально
+        const response = await fetch(`/api/task/${taskId}/comments`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ content: commentText })
+        });
 
-        const commentsList = document.getElementById('commentsList');
-        if (commentsList.querySelector('.comment-placeholder')) {
-            commentsList.innerHTML = '';
-        }
+        if (!response.ok) throw new Error('Ошибка добавления комментария');
 
-        const newComment = document.createElement('div');
-        newComment.className = 'comment';
-        newComment.innerHTML = `
-            <div class="comment-author">
-                <div class="author-avatar" style="background-color: ${getRandomColor(current_user.id)}">
-                    ${current_user.name.charAt(0).toUpperCase()}
-                </div>
-                <div class="author-info">
-                    <h4>${current_user.name}</h4>
-                    <span class="comment-date">Только что</span>
-                </div>
-            </div>
-            <div class="comment-text">
-                ${commentText}
-            </div>
-        `;
-
-        commentsList.prepend(newComment);
+        // Очищаем поле ввода и обновляем список комментариев
         document.getElementById('commentText').value = '';
+        await loadComments(taskId);
 
     } catch (error) {
         console.error('Ошибка добавления комментария:', error);

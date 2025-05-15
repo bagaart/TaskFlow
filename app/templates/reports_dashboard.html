@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskFlow - Отчеты</title>
+    <link rel="stylesheet" href="../static/styles/admin.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+    .notification {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 15px 20px;
+        border-radius: 5px;
+        color: white;
+        z-index: 1000;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        opacity: 1;
+        transition: opacity 0.5s ease;
+    }
+
+    .notification.success {
+        background-color: #4CAF50;
+    }
+
+    .notification.error {
+        background-color: #F44336;
+    }
+
+    .notification.fade-out {
+        opacity: 0;
+    }
+
+    .report-format-selector {
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .report-format-selector label {
+        font-weight: bold;
+    }
+
+    .report-format-selector select {
+        padding: 8px 12px;
+        border-radius: 4px;
+        border: 1px solid #ddd;
+        background-color: white;
+    }
+
+    .format-badge {
+        display: inline-block;
+        padding: 3px 8px;
+        border-radius: 12px;
+        background-color: #e0e0e0;
+        font-size: 12px;
+        font-weight: bold;
+        text-transform: uppercase;
+    }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <a class="logo" href="{{ url_for('taskflow.index') }}"><span>TaskFlow</span></a>
+    </header>
+
+    <aside class="sidebar">
+        <ul class="nav-menu">
+            <li><a href="{{ url_for('taskflow.admin_panel') }}"><i class="fas fa-arrow-left"></i> Назад</a></li>
+        </ul>
+    </aside>
+
+    <main class="main-content">
+        <div class="admin-header">
+            <h1><i class="fas fa-chart-bar"></i> Управление отчетами</h1>
+        </div>
+
+        <div class="admin-section">
+            <h2><i class="fas fa-plus-circle"></i> Создать новый отчет</h2>
+
+            <div class="report-format-selector">
+                <label for="report-format">Формат отчета:</label>
+                <select id="report-format">
+                    <option value="json">JSON</option>
+                    <option value="pdf">PDF (с графиками)</option>
+                </select>
+            </div>
+
+            <div class="report-types">
+                <div class="report-type-card" data-type="tasks">
+                    <i class="fas fa-tasks"></i>
+                    <h3>Отчет по задачам</h3>
+                    <p>Статистика по всем задачам в системе</p>
+                    <button class="btn-generate">Сгенерировать</button>
+                </div>
+
+                <div class="report-type-card" data-type="projects">
+                    <i class="fas fa-project-diagram"></i>
+                    <h3>Отчет по проектам</h3>
+                    <p>Статистика по проектам и их задачам</p>
+                    <button class="btn-generate">Сгенерировать</button>
+                </div>
+
+                <div class="report-type-card" data-type="users">
+                    <i class="fas fa-users"></i>
+                    <h3>Отчет по пользователям</h3>
+                    <p>Активность пользователей и назначенные задачи</p>
+                    <button class="btn-generate">Сгенерировать</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="admin-section">
+            <h2><i class="fas fa-history"></i> История отчетов</h2>
+
+            <table class="reports-table">
+                <thead>
+                    <tr>
+                        <th>Тип отчета</th>
+                        <th>Формат</th>
+                        <th>Дата создания</th>
+                        <th>Статус</th>
+                        <th>Автор</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for report in reports %}
+                    <tr>
+                        <td>
+                            {% if report.report_type == 'tasks' %}
+                                <i class="fas fa-tasks"></i>
+                            {% elif report.report_type == 'projects' %}
+                                <i class="fas fa-project-diagram"></i>
+                            {% else %}
+                                <i class="fas fa-users"></i>
+                            {% endif %}
+                            {{ report.report_type }}
+                        </td>
+                        <td><span class="format-badge">{{ report.format|upper }}</span></td>
+                        <td>{{ report.timestamp.strftime('%d.%m.%Y %H:%M') }}</td>
+                        <td>
+                            <span class="status-badge {{ report.status }}">
+                                {{ report.status }}
+                            </span>
+                        </td>
+                        <td>{{ report.generator.name }}</td>
+                        <td>
+                            {% if report.status == 'completed' and report.file_path %}
+                            <a href="{{ url_for('taskflow.download_report', report_id=report.id) }}"
+                               class="btn-download" title="Скачать">
+                                <i class="fas fa-download"></i>
+                                {{ 'PDF' if report.format == 'pdf' else 'JSON' }}
+                            </a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Обработка генерации отчетов
+        document.querySelectorAll('.btn-generate').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const card = this.closest('.report-type-card');
+                const reportType = card.dataset.type;
+                const format = document.getElementById('report-format').value;
+
+                // Показываем индикатор загрузки
+                const originalText = this.innerHTML;
+                this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Генерация...';
+                this.disabled = true;
+
+                fetch('/admin/generate_report', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        type: reportType,
+                        format: format
+                    })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Ошибка сервера');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        showNotification('Отчет успешно поставлен в очередь на генерацию', 'success');
+                        setTimeout(() => {
+                            location.reload();
+                        }, 1500);
+                    } else {
+                        throw new Error(data.error || 'Неизвестная ошибка при генерации отчета');
+                    }
+                })
+                .catch(error => {
+                    showNotification(error.message, 'error');
+                    this.innerHTML = originalText;
+                    this.disabled = false;
+                });
+            });
+        });
+
+        // Функция для показа уведомлений
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.innerHTML = message;
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.classList.add('fade-out');
+                setTimeout(() => {
+                    notification.remove();
+                }, 500);
+            }, 3000);
+        }
+    });
+    </script>
+</body>
+</html>

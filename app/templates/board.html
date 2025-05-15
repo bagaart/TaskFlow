@@ -63,8 +63,8 @@
                     </div>
                     <div class="task-card-header">
                         <div class="task-title">{{ task.title }}</div>
-                        <div class="task-priority {{ task.priority|lower if task.priority else 'low' }}">
-                            {{ task.priority or 'Low' }}
+                        <div class="task-priority {{ task.priority|lower if task.priority else 'низкий' }}">
+                            {{ task.priority or 'Низкий' }}
                         </div>
                     </div>
                     <div class="task-description">
@@ -121,8 +121,8 @@
                     </div>
                     <div class="task-card-header">
                         <div class="task-title">{{ task.title }}</div>
-                        <div class="task-priority {{ task.priority|lower if task.priority else 'low' }}">
-                            {{ task.priority or 'Low' }}
+                        <div class="task-priority {{ task.priority|lower if task.priority else 'низкий' }}">
+                            {{ task.priority or 'Низкий' }}
                         </div>
                     </div>
                     <div class="task-description">
@@ -179,8 +179,8 @@
                     </div>
                     <div class="task-card-header">
                         <div class="task-title">{{ task.title }}</div>
-                        <div class="task-priority {{ task.priority|lower if task.priority else 'low' }}">
-                            {{ task.priority or 'Low' }}
+                        <div class="task-priority {{ task.priority|lower if task.priority else 'низкий' }}">
+                            {{ task.priority or 'Низкий' }}
                         </div>
                     </div>
                     <div class="task-description">
@@ -233,9 +233,9 @@
             <div class="form-group">
                 <label for="editTaskPriority">Приоритет</label>
                 <select id="editTaskPriority" name="priority">
-                    <option value="low">Low</option>
-                    <option value="medium">Medium</option>
-                    <option value="high">High</option>
+                    <option value="низкий">Низкий</option>
+                    <option value="средний">Средний</option>
+                    <option value="высокий">Высокий</option>
                 </select>
             </div>
             <div class="form-group">
@@ -403,7 +403,7 @@ async function editTask(taskId) {
         document.getElementById('editTaskDescription').value = task.description || '';
 
         // Handle priority (which might be null)
-        const priority = task.priority ? task.priority.toLowerCase() : 'low';
+        const priority = task.priority ? task.priority.toLowerCase() : 'низкий';
         document.getElementById('editTaskPriority').value = priority;
 
         if (task.deadline) {
@@ -471,8 +471,8 @@ function updateTaskInDOM(task) {
     if (taskCard) {
         // Обновляем данные в DOM
         taskCard.querySelector('.task-title').textContent = task.title;
-        taskCard.querySelector('.task-priority').textContent = task.priority || 'Low';
-        taskCard.querySelector('.task-priority').className = `task-priority ${task.priority.toLowerCase() || 'low'}`;
+        taskCard.querySelector('.task-priority').textContent = task.priority || 'Низкий';
+        taskCard.querySelector('.task-priority').className = `task-priority ${task.priority.toLowerCase() || 'низкий'}`;
         taskCard.querySelector('.task-description').textContent = task.description || 'Нет описания';
 
         // Обновляем статус (может потребоваться переместить карточку в другую колонку)

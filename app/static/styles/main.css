@@ -11,6 +11,9 @@ body {
     background-color: #f5f7fa;
     color: #333;
 }
+body a {
+    text-decoration: none;
+}
 
 .header {
     padding: 20px 40px;
