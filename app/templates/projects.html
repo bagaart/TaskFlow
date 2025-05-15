@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskFlow - Проекты</title>
+    <link rel="stylesheet" href="../static/styles/projects.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+<header class="header">
+    <a class="logo" href="{{ url_for('taskflow.index') }}"><span>TaskFlow</span></a>
+</header>
+
+<aside class="sidebar">
+    <ul class="nav-menu">
+        <li><a href="#"><img class="icon" src="https://img.icons8.com/windows/32/search--v1.png" alt="search--v1"/>Поиск</a></li>
+        <li><a href="{{ url_for('taskflow.tasks') }}"><img class="icon" src="https://img.icons8.com/windows/32/todo-list.png" alt="todo-list"/>Задачи</a></li>
+        <li><a href="{{ url_for('taskflow.projects') }}"><img class="icon" src="https://img.icons8.com/windows/32/flipboard.png" alt="flipboard"/>Проекты</a></li>
+        <li><a href="#"><img class="icon" src="https://img.icons8.com/windows/32/gender-neutral-user.png" alt="gender-neutral-user"/>Профиль</a></li>
+        <li><a href="{{ url_for('taskflow.create_task') }}" class="create-task"><img class="icon" src="https://img.icons8.com/windows/32/plus-math.png" alt="plus-math"/>Создать задачу</a></li>
+        <li><a href="{{ url_for('taskflow.create_project') }}" class="create-task"><img class="icon" src="https://img.icons8.com/windows/32/plus-math.png" alt="plus-math"/>Создать проект</a></li>
+    </ul>
+    <ul class="nav-menu bottom-menu">
+        <li><a href="#"><img class="icon" src="https://img.icons8.com/windows/32/help.png" alt="help"/>Помощь</a></li>
+        <li><a href="#"><img class="icon" src="https://img.icons8.com/windows/32/settings--v1.png" alt="settings--v1"/>Настройки</a></li>
+        <li><a href="{{ url_for('taskflow.logout') }}"><img class="icon" src="https://img.icons8.com/windows/32/exit.png" alt="exit"/>Выход</a></li>
+    </ul>
+</aside>
+
+<main class="main-content">
+    <div class="projects-header">
+        <h1>Ваши проекты</h1>
+        <p>Выберите проект, чтобы посмотреть подробности.</p>
+    </div>
+
+    <div class="sort-options">
+    <button class="sort-btn active" data-sort="created">
+        <i class="fas fa-calendar-plus"></i> Новые
+    </button>
+    <button class="sort-btn" data-sort="deadline">
+        <i class="fas fa-calendar-times"></i> По дедлайну
+    </button>
+    <button class="sort-btn" data-sort="name">
+        <i class="fas fa-sort-alpha-down"></i> По имени
+    </button>
+</div>
+
+    <div class="projects-list">
+        {% if user_projects %}
+        {% for project in user_projects %}
+        <div class="project-card"
+             data-id="{{ project.id }}"
+             data-name="{{ project.name }}"
+             data-description="{{ project.description or 'Нет описания' }}"
+             data-created="{{ project.created_at }}"
+             data-deadline="{{ project.deadline if project.deadline else '' }}">
+            <div class="project-card-header">
+                <strong>{{ project.name }}</strong>
+                <span class="project-status {% if project.days_remaining and project.days_remaining < 3 %}urgent{% endif %}">
+                    {% if project.deadline %}
+                        {% if project.days_remaining > 0 %}
+                            Осталось {{ project.days_remaining }} дн.
+                        {% elif project.days_remaining == 0 %}
+                            Сегодня
+                        {% else %}
+                            Просрочено
+                        {% endif %}
+                    {% else %}
+                        Нет дедлайна
+                    {% endif %}
+                </span>
+            </div>
+            <p class="project-description">{{ project.description|truncate(100) }}</p>
+            <div class="project-meta">
+                <span class="created-date"><i class="fas fa-calendar-plus"></i> {{ project.formatted_created_at }}</span>
+                {% if project.deadline %}
+                <span class="deadline-date"><i class="fas fa-calendar-times"></i> {{ project.formatted_deadline }}</span>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+        {% else %}
+            <div class="no-projects">
+                <img src="https://img.icons8.com/fluency/96/000000/nothing-found.png" alt="No projects">
+                <p>У вас пока нет проектов</p>
+                <a href="{{ url_for('taskflow.create_project') }}" class="btn-create-project">Создать первый проект</a>
+            </div>
+        {% endif %}
+    </div>
+</main>
+
+<!-- Боковая панель с деталями проекта -->
+<div class="project-details" id="projectDetails">
+    <div class="project-details-header">
+        <h2 id="detailName">Название проекта</h2>
+        <span class="close-btn">&times;</span>
+    </div>
+
+    <div class="project-info-section">
+        <h3><i class="fas fa-info-circle"></i> Информация о проекте</h3>
+        <p id="detailDescription">Описание проекта будет показано здесь.</p>
+    </div>
+
+    <div class="project-stats">
+        <div class="stat-item">
+            <i class="fas fa-calendar-plus"></i>
+            <span id="createdDate">Создан: ...</span>
+        </div>
+        <div class="stat-item">
+            <i class="fas fa-calendar-times"></i>
+            <span id="deadlineDate">Дедлайн: ...</span>
+        </div>
+        <div class="stat-item">
+            <i class="fas fa-tasks"></i>
+            <span id="tasksCount">... задач</span>
+        </div>
+    </div>
+
+    <div class="project-members-section">
+    <h3><i class="fas fa-users"></i> Команда проекта</h3>
+
+    <!-- Менеджер -->
+    <div class="role-section">
+        <h4><i class="fas fa-crown"></i> Менеджер</h4>
+        <ul class="members-list" id="managerList">
+            <li class="loading">Загрузка...</li>
+        </ul>
+    </div>
+
+    <!-- Аналитик -->
+    <div class="role-section">
+        <h4><i class="fas fa-chart-line"></i> Аналитик</h4>
+        <ul class="members-list" id="analystList">
+            <li class="no-members">Не назначен</li>
+        </ul>
+    </div>
+
+    <!-- Участники -->
+    <div class="role-section">
+        <h4><i class="fas fa-users"></i> Участники</h4>
+        <ul class="members-list" id="membersList">
+            <li class="loading">Загрузка участников...</li>
+        </ul>
+    </div>
+</div>
+
+    <button class="btn-go-to-board" id="goToBoardBtn">
+        <i class="fas fa-columns"></i> Перейти к доске проекта
+    </button>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Инициализация сортировки
+    initSorting();
+
+    // Обработчики для карточек проектов
+    setupProjectCards();
+
+    // Инициализация боковой панели
+    setupProjectDetailsPanel();
+});
+
+// Инициализация сортировки проектов
+function initSorting() {
+    const sortOptions = document.querySelectorAll('.sort-btn');
+    const projectsList = document.querySelector('.projects-list');
+
+    sortOptions.forEach(btn => {
+        btn.addEventListener('click', function() {
+            // Обновляем активную кнопку
+            sortOptions.forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+
+            // Сортируем проекты
+            const sortBy = this.dataset.sort;
+            sortProjects(sortBy);
+
+            // Обновляем URL без перезагрузки страницы
+            updateUrlParam('sort', sortBy);
+        });
+    });
+
+    // Применяем сортировку из URL при загрузке
+    const urlParams = new URLSearchParams(window.location.search);
+    const sortBy = urlParams.get('sort') || 'created';
+    document.querySelector(`.sort-btn[data-sort="${sortBy}"]`).classList.add('active');
+    sortProjects(sortBy);
+}
+
+// Функция сортировки проектов
+function sortProjects(sortBy) {
+    const projectsList = document.querySelector('.projects-list');
+    const projects = Array.from(document.querySelectorAll('.project-card'));
+
+    projects.sort((a, b) => {
+        switch(sortBy) {
+            case 'deadline':
+                const deadlineA = a.dataset.deadline || '9999-12-31';
+                const deadlineB = b.dataset.deadline || '9999-12-31';
+                return new Date(deadlineA) - new Date(deadlineB);
+
+            case 'created':
+                return new Date(b.dataset.created) - new Date(a.dataset.created);
+
+            case 'name':
+                return a.dataset.name.localeCompare(b.dataset.name);
+
+            default:
+                return 0;
+        }
+    });
+
+    // Очищаем и перезаполняем список
+    projectsList.innerHTML = '';
+    projects.forEach(project => projectsList.appendChild(project));
+
+    // Переинициализируем обработчики для карточек
+    setupProjectCards();
+}
+
+// Обновление параметра URL
+function updateUrlParam(key, value) {
+    const url = new URL(window.location);
+    url.searchParams.set(key, value);
+    window.history.pushState({}, '', url);
+}
+
+// Настройка обработчиков для карточек проектов
+function setupProjectCards() {
+    document.querySelectorAll('.project-card').forEach(card => {
+        card.addEventListener('click', async function() {
+            const projectId = this.dataset.id;
+            await showProjectDetails(projectId, this);
+        });
+    });
+}
+
+// Показать детали проекта
+async function showProjectDetails(projectId, cardElement) {
+    try {
+        // Получаем базовые данные из атрибутов карточки
+        const projectName = cardElement.dataset.name;
+        const projectDescription = cardElement.dataset.description || 'Нет описания';
+        const createdDate = formatDate(cardElement.dataset.created);
+        const deadlineDate = cardElement.dataset.deadline ? formatDate(cardElement.dataset.deadline) : 'Нет дедлайна';
+
+        // Обновляем основную информацию
+        document.getElementById('detailName').textContent = projectName;
+        document.getElementById('detailDescription').textContent = projectDescription;
+        document.getElementById('createdDate').textContent = `Создан: ${createdDate}`;
+        document.getElementById('deadlineDate').textContent = `Дедлайн: ${deadlineDate}`;
+
+        // Загружаем участников проекта
+        await loadProjectParticipants(projectId);
+
+        // Загружаем статистику задач
+        await loadProjectStats(projectId);
+
+        // Настраиваем кнопку перехода
+        document.getElementById('goToBoardBtn').onclick = () => {
+            window.location.href = `/board/${projectId}`;
+        };
+
+        // Открываем панель деталей
+        openProjectDetails();
+    } catch (error) {
+        console.error('Ошибка при загрузке деталей проекта:', error);
+        alert('Не удалось загрузить информацию о проекте');
+    }
+}
+
+
+// Загрузка статистики проекта
+async function loadProjectStats(projectId) {
+    try {
+        const response = await fetch(`/api/project/${projectId}/stats`);
+        if (!response.ok) throw new Error('Ошибка загрузки статистики');
+
+        const data = await response.json();
+        document.getElementById('tasksCount').textContent = `${data.total_tasks} задач`;
+
+        // Можно добавить больше статистики при необходимости
+    } catch (error) {
+        console.error('Ошибка при загрузке статистики:', error);
+        document.getElementById('tasksCount').textContent = 'Не удалось загрузить статистику';
+    }
+}
+
+// Форматирование даты
+function formatDate(dateString) {
+    if (!dateString) return 'Нет данных';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('ru-RU', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+    });
+}
+
+// Управление боковой панелью деталей
+function setupProjectDetailsPanel() {
+    document.querySelector('.close-btn').addEventListener('click', closeProjectDetails);
+}
+
+function openProjectDetails() {
+    document.getElementById('projectDetails').classList.add('open');
+}
+
+function closeProjectDetails() {
+    document.getElementById('projectDetails').classList.remove('open');
+}
+
+// Обработка кнопки создания проекта
+document.getElementById('createProjectBtn')?.addEventListener('click', () => {
+    window.location.href = '/create_project';
+});
+
+async function loadProjectParticipants(projectId) {
+    const managerList = document.getElementById('managerList');
+    const analystList = document.getElementById('analystList');
+    const membersList = document.getElementById('membersList');
+
+    managerList.innerHTML = '<li class="loading">Загрузка...</li>';
+    analystList.innerHTML = '<li class="loading">Загрузка...</li>';
+    membersList.innerHTML = '<li class="loading">Загрузка...</li>';
+
+    try {
+        const response = await fetch(`/api/project/${projectId}/participants_with_roles`);
+        if (!response.ok) throw new Error('Ошибка загрузки участников');
+
+        const data = await response.json();
+
+        // Очищаем списки
+        managerList.innerHTML = '';
+        analystList.innerHTML = '';
+        membersList.innerHTML = '';
+
+        // Разделяем участников по ролям
+        let hasManager = false;
+        let hasAnalyst = false;
+
+        data.participants.forEach(participant => {
+            const li = createMemberListItem(participant);
+
+            if (participant.role === 'manager') {
+                managerList.appendChild(li);
+                hasManager = true;
+            } else if (participant.role === 'analyst') {
+                analystList.appendChild(li);
+                hasAnalyst = true;
+            } else {
+                membersList.appendChild(li);
+            }
+        });
+
+        if (!hasManager) {
+            managerList.innerHTML = '<li class="no-members">Не назначен</li>';
+        }
+
+        if (!hasAnalyst) {
+            analystList.innerHTML = '<li class="no-members">Не назначен</li>';
+        }
+
+    } catch (error) {
+        managerList.innerHTML = `<li class="error">${error.message}</li>`;
+        analystList.innerHTML = `<li class="error">${error.message}</li>`;
+        membersList.innerHTML = `<li class="error">${error.message}</li>`;
+        console.error('Ошибка при загрузке участников:', error);
+    }
+}
+
+function createMemberListItem(participant) {
+    const li = document.createElement('li');
+    li.className = 'member-item';
+    li.innerHTML = `
+        <div class="member-avatar">
+            ${participant.name.charAt(0).toUpperCase()}
+        </div>
+        <div class="member-info">
+            <span class="member-name">${participant.name}</span>
+            <span class="member-email">${participant.email}</span>
+        </div>
+    `;
+    return li;
+}
+</script>
+</body>
+</html>

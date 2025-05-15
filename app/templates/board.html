@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskFlow - Доска проекта</title>
+    <link rel="stylesheet" href="../static/styles/board.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+<header class="header">
+    <a class="logo" href="{{ url_for('taskflow.index') }}"><span>TaskFlow</span></a>
+</header>
+
+<aside class="sidebar">
+    <ul class="nav-menu">
+        <li><a href="#"><img class="icon" src="https://img.icons8.com/windows/32/search--v1.png" alt="search--v1"/>Поиск</a></li>
+        <li><a href="{{ url_for('taskflow.tasks') }}"><img class="icon" src="https://img.icons8.com/windows/32/todo-list.png" alt="todo-list"/>Задачи</a></li>
+        <li><a href="{{ url_for('taskflow.projects') }}"><img class="icon" src="https://img.icons8.com/windows/32/flipboard.png" alt="flipboard"/>Проекты</a></li>
+        <li><a href="#"><img class="icon" src="https://img.icons8.com/windows/32/gender-neutral-user.png" alt="gender-neutral-user"/>Профиль</a></li>
+        <li><a href="{{ url_for('taskflow.create_task') }}" class="create-task"><img class="icon" src="https://img.icons8.com/windows/32/plus-math.png" alt="plus-math"/>Создать задачу</a></li>
+        <li><a href="{{ url_for('taskflow.create_project') }}" class="create-task"><img class="icon" src="https://img.icons8.com/windows/32/plus-math.png" alt="plus-math"/>Создать проект</a></li>
+    </ul>
+    <ul class="nav-menu bottom-menu">
+        <li><a href="#"><img class="icon" src="https://img.icons8.com/windows/32/help.png" alt="help"/>Помощь</a></li>
+        <li><a href="#"><img class="icon" src="https://img.icons8.com/windows/32/settings--v1.png" alt="settings--v1"/>Настройки</a></li>
+        <li><a href="{{ url_for('taskflow.logout') }}"><img class="icon" src="https://img.icons8.com/windows/32/exit.png" alt="exit"/>Выход</a></li>
+    </ul>
+</aside>
+
+<main class="main-content">
+    <div class="board-header">
+        <h1>Доска проекта: <span id="projectName">{{ project.name }}</span></h1>
+        <p>Перетаскивайте задачи между колонками для изменения их статуса</p>
+    </div>
+
+    <div class="kanban-board">
+        <!-- Колонка "To Do" -->
+        <div class="kanban-column" data-status="todo">
+            <div class="column-header">
+                <span>To Do</span>
+                <span class="task-count">{{ tasks_by_status.todo|length }}</span>
+            </div>
+            <div class="column-tasks" id="todo-column">
+                {% for task in tasks_by_status.todo %}
+                <div class="task-card" draggable="true" data-task-id="{{ task.id }}">
+                    <div class="task-menu">
+                        <button class="task-menu-btn" onclick="toggleDropdown(this)">
+                            <i class="fas fa-ellipsis-v"></i>
+                        </button>
+                        <div class="task-dropdown">
+                            <div class="task-dropdown-item" onclick="editTask({{ task.id }})">
+                                <i class="fas fa-edit"></i> Редактировать
+                            </div>
+                            <div class="task-dropdown-item" onclick="deleteTask({{ task.id }})">
+                                <i class="fas fa-trash"></i> Удалить
+                            </div>
+                        </div>
+                    </div>
+                    <div class="task-card-header">
+                        <div class="task-title">{{ task.title }}</div>
+                        <div class="task-priority {{ task.priority|lower if task.priority else 'low' }}">
+                            {{ task.priority or 'Low' }}
+                        </div>
+                    </div>
+                    <div class="task-description">
+                        {{ task.description|truncate(100) if task.description else "Нет описания" }}
+                    </div>
+                    <div class="task-footer">
+                        <div class="task-deadline {% if task.days_remaining < 0 %}overdue{% elif task.days_remaining < 3 %}urgent{% endif %}">
+                            <i class="fas fa-calendar-day"></i>
+                            {% if task.deadline %}
+                                {{ task.deadline.strftime('%d.%m') }}
+                            {% else %}
+                                Нет срока
+                            {% endif %}
+                        </div>
+                        <div class="task-assignees">
+                            {% for executor in task.executors[:3] %}
+                            <div class="assignee-avatar" title="{{ executor.name }}">
+                                {{ executor.name[0]|upper }}
+                            </div>
+                            {% endfor %}
+                            {% if task.executors|length > 3 %}
+                            <div class="assignee-avatar" title="Ещё {{ task.executors|length - 3 }}">
+                                +{{ task.executors|length - 3 }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Колонка "In Progress" -->
+        <div class="kanban-column" data-status="in_progress">
+            <div class="column-header">
+                <span>In Progress</span>
+                <span class="task-count">{{ tasks_by_status.in_progress|length }}</span>
+            </div>
+            <div class="column-tasks" id="in-progress-column">
+                {% for task in tasks_by_status.in_progress %}
+                <div class="task-card" draggable="true" data-task-id="{{ task.id }}">
+                    <div class="task-menu">
+                        <button class="task-menu-btn" onclick="toggleDropdown(this)">
+                            <i class="fas fa-ellipsis-v"></i>
+                        </button>
+                        <div class="task-dropdown">
+                            <div class="task-dropdown-item" onclick="editTask({{ task.id }})">
+                                <i class="fas fa-edit"></i> Редактировать
+                            </div>
+                            <div class="task-dropdown-item" onclick="deleteTask({{ task.id }})">
+                                <i class="fas fa-trash"></i> Удалить
+                            </div>
+                        </div>
+                    </div>
+                    <div class="task-card-header">
+                        <div class="task-title">{{ task.title }}</div>
+                        <div class="task-priority {{ task.priority|lower if task.priority else 'low' }}">
+                            {{ task.priority or 'Low' }}
+                        </div>
+                    </div>
+                    <div class="task-description">
+                        {{ task.description|truncate(100) if task.description else "Нет описания" }}
+                    </div>
+                    <div class="task-footer">
+                        <div class="task-deadline {% if task.days_remaining < 0 %}overdue{% elif task.days_remaining < 3 %}urgent{% endif %}">
+                            <i class="fas fa-calendar-day"></i>
+                            {% if task.deadline %}
+                                {{ task.deadline.strftime('%d.%m') }}
+                            {% else %}
+                                Нет срока
+                            {% endif %}
+                        </div>
+                        <div class="task-assignees">
+                            {% for executor in task.executors[:3] %}
+                            <div class="assignee-avatar" title="{{ executor.name }}">
+                                {{ executor.name[0]|upper }}
+                            </div>
+                            {% endfor %}
+                            {% if task.executors|length > 3 %}
+                            <div class="assignee-avatar" title="Ещё {{ task.executors|length - 3 }}">
+                                +{{ task.executors|length - 3 }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Колонка "Done" -->
+        <div class="kanban-column" data-status="done">
+            <div class="column-header">
+                <span>Done</span>
+                <span class="task-count">{{ tasks_by_status.done|length }}</span>
+            </div>
+            <div class="column-tasks" id="done-column">
+                {% for task in tasks_by_status.done %}
+                <div class="task-card" draggable="true" data-task-id="{{ task.id }}">
+                    <div class="task-menu">
+                        <button class="task-menu-btn" onclick="toggleDropdown(this)">
+                            <i class="fas fa-ellipsis-v"></i>
+                        </button>
+                        <div class="task-dropdown">
+                            <div class="task-dropdown-item" onclick="editTask({{ task.id }})">
+                                <i class="fas fa-edit"></i> Редактировать
+                            </div>
+                            <div class="task-dropdown-item" onclick="deleteTask({{ task.id }})">
+                                <i class="fas fa-trash"></i> Удалить
+                            </div>
+                        </div>
+                    </div>
+                    <div class="task-card-header">
+                        <div class="task-title">{{ task.title }}</div>
+                        <div class="task-priority {{ task.priority|lower if task.priority else 'low' }}">
+                            {{ task.priority or 'Low' }}
+                        </div>
+                    </div>
+                    <div class="task-description">
+                        {{ task.description|truncate(100) if task.description else "Нет описания" }}
+                    </div>
+                    <div class="task-footer">
+                        <div class="task-deadline {% if task.days_remaining < 0 %}overdue{% elif task.days_remaining < 3 %}urgent{% endif %}">
+                            <i class="fas fa-calendar-day"></i>
+                            {% if task.deadline %}
+                                {{ task.deadline.strftime('%d.%m') }}
+                            {% else %}
+                                Нет срока
+                            {% endif %}
+                        </div>
+                        <div class="task-assignees">
+                            {% for executor in task.executors[:3] %}
+                            <div class="assignee-avatar" title="{{ executor.name }}">
+                                {{ executor.name[0]|upper }}
+                            </div>
+                            {% endfor %}
+                            {% if task.executors|length > 3 %}
+                            <div class="assignee-avatar" title="Ещё {{ task.executors|length - 3 }}">
+                                +{{ task.executors|length - 3 }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- Модальное окно редактирования задачи -->
+<div class="modal" id="editTaskModal">
+    <div class="modal-content">
+        <span class="close-btn" onclick="closeEditTaskModal()">&times;</span>
+        <h2>Редактировать задачу</h2>
+        <form id="editTaskForm">
+            <input type="hidden" id="editTaskId" name="task_id">
+            <div class="form-group">
+                <label for="editTaskTitle">Название задачи*</label>
+                <input type="text" id="editTaskTitle" name="title" required>
+            </div>
+            <div class="form-group">
+                <label for="editTaskDescription">Описание</label>
+                <textarea id="editTaskDescription" name="description"></textarea>
+            </div>
+            <div class="form-group">
+                <label for="editTaskPriority">Приоритет</label>
+                <select id="editTaskPriority" name="priority">
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="editTaskDeadline">Срок выполнения</label>
+                <input type="date" id="editTaskDeadline" name="deadline">
+            </div>
+            <div class="form-group">
+                <label>Статус</label>
+                <select id="editTaskStatus" name="status">
+                    <option value="todo">To Do</option>
+                    <option value="in_progress">In Progress</option>
+                    <option value="done">Done</option>
+                </select>
+            </div>
+            <button type="submit" class="btn-save">Сохранить изменения</button>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Инициализация drag and drop
+    initDragAndDrop();
+
+    // Обработчик формы редактирования задачи
+    document.getElementById('editTaskForm').addEventListener('submit', handleEditTask);
+});
+
+let draggedTask = null;
+
+function initDragAndDrop() {
+    // Обработчики для карточек задач
+    const tasks = document.querySelectorAll('.task-card');
+    tasks.forEach(task => {
+        task.addEventListener('dragstart', dragStart);
+        task.addEventListener('dragend', dragEnd);
+    });
+
+    // Обработчики для колонок
+    const columns = document.querySelectorAll('.kanban-column');
+    columns.forEach(column => {
+        column.addEventListener('dragover', dragOver);
+        column.addEventListener('dragenter', dragEnter);
+        column.addEventListener('dragleave', dragLeave);
+        column.addEventListener('drop', drop);
+    });
+}
+
+function dragStart(e) {
+    draggedTask = this;
+    this.classList.add('dragging');
+    e.dataTransfer.setData('text/plain', this.dataset.taskId);
+}
+
+function dragEnd() {
+    this.classList.remove('dragging');
+    draggedTask = null;
+}
+
+function dragOver(e) {
+    e.preventDefault();
+}
+
+function dragEnter(e) {
+    e.preventDefault();
+    this.classList.add('drag-over');
+}
+
+function dragLeave() {
+    this.classList.remove('drag-over');
+}
+
+function drop(e) {
+    e.preventDefault();
+    this.classList.remove('drag-over');
+
+    if (draggedTask) {
+        const newStatus = this.dataset.status;
+        const taskId = draggedTask.dataset.taskId;
+
+        // Перемещаем задачу в новую колонку
+        this.querySelector('.column-tasks').appendChild(draggedTask);
+
+        // Обновляем статус задачи на сервере
+        updateTaskStatus(taskId, newStatus);
+
+        // Обновляем счетчики задач
+        updateTaskCounters();
+    }
+}
+
+async function updateTaskStatus(taskId, newStatus) {
+    try {
+        const response = await fetch(`/api/task/${taskId}/status`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ status: formatStatus(newStatus) })
+        });
+
+        if (!response.ok) {
+            throw new Error('Ошибка при обновлении статуса');
+        }
+
+        // Обновляем статус в DOM
+        const taskCard = document.querySelector(`.task-card[data-task-id="${taskId}"]`);
+        if (taskCard) {
+            taskCard.dataset.status = newStatus;
+        }
+    } catch (error) {
+        console.error('Ошибка:', error);
+        alert('Не удалось обновить статус задачи');
+    }
+}
+
+function formatStatus(status) {
+    switch(status) {
+        case 'todo': return 'To Do';
+        case 'in_progress': return 'In Progress';
+        case 'done': return 'Done';
+        default: return status;
+    }
+}
+
+function updateTaskCounters() {
+    document.querySelectorAll('.kanban-column').forEach(column => {
+        const taskCount = column.querySelector('.column-tasks').children.length;
+        column.querySelector('.task-count').textContent = taskCount;
+    });
+}
+
+function toggleDropdown(button) {
+    const dropdown = button.nextElementSibling;
+    dropdown.classList.toggle('show');
+
+    // Закрываем другие открытые dropdown
+    document.querySelectorAll('.task-dropdown').forEach(dd => {
+        if (dd !== dropdown) {
+            dd.classList.remove('show');
+        }
+    });
+}
+
+// Закрываем dropdown при клике вне его
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('.task-menu')) {
+        document.querySelectorAll('.task-dropdown').forEach(dd => {
+            dd.classList.remove('show');
+        });
+    }
+});
+
+async function editTask(taskId) {
+    try {
+        // Получаем данные задачи
+        const response = await fetch(`/api/task/${taskId}`);
+        if (!response.ok) throw new Error('Ошибка загрузки данных задачи');
+
+        const task = await response.json();
+
+        // Заполняем форму редактирования
+        document.getElementById('editTaskId').value = task.id;
+        document.getElementById('editTaskTitle').value = task.title;
+        document.getElementById('editTaskDescription').value = task.description || '';
+
+        // Handle priority (which might be null)
+        const priority = task.priority ? task.priority.toLowerCase() : 'low';
+        document.getElementById('editTaskPriority').value = priority;
+
+        if (task.deadline) {
+            const deadlineDate = new Date(task.deadline);
+            document.getElementById('editTaskDeadline').value = deadlineDate.toISOString().split('T')[0];
+        } else {
+            document.getElementById('editTaskDeadline').value = '';
+        }
+
+        // Handle status (which might be null or in different format)
+        let status = 'todo';
+        if (task.status) {
+            status = task.status.toLowerCase().replace(' ', '_');
+        }
+        document.getElementById('editTaskStatus').value = status;
+
+        // Открываем модальное окно
+        document.getElementById('editTaskModal').style.display = 'block';
+    } catch (error) {
+        console.error('Ошибка:', error);
+        alert('Не удалось загрузить данные задачи');
+    }
+}
+
+function closeEditTaskModal() {
+    document.getElementById('editTaskModal').style.display = 'none';
+}
+
+async function handleEditTask(e) {
+    e.preventDefault();
+
+    const formData = new FormData(e.target);
+    const taskId = formData.get('task_id');
+
+    try {
+        const response = await fetch(`/api/task/${taskId}`, {
+            method: 'PUT',
+            body: JSON.stringify({
+                title: formData.get('title'),
+                description: formData.get('description'),
+                priority: formData.get('priority'),
+                deadline: formData.get('deadline'),
+                status: formatStatus(formData.get('status'))
+            }),
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error('Ошибка при обновлении задачи');
+        }
+
+        const updatedTask = await response.json();
+        updateTaskInDOM(updatedTask);
+        closeEditTaskModal();
+    } catch (error) {
+        console.error('Ошибка:', error);
+        alert('Не удалось обновить задачу');
+    }
+}
+
+function updateTaskInDOM(task) {
+    const taskCard = document.querySelector(`.task-card[data-task-id="${task.id}"]`);
+    if (taskCard) {
+        // Обновляем данные в DOM
+        taskCard.querySelector('.task-title').textContent = task.title;
+        taskCard.querySelector('.task-priority').textContent = task.priority || 'Low';
+        taskCard.querySelector('.task-priority').className = `task-priority ${task.priority.toLowerCase() || 'low'}`;
+        taskCard.querySelector('.task-description').textContent = task.description || 'Нет описания';
+
+        // Обновляем статус (может потребоваться переместить карточку в другую колонку)
+        const newStatus = task.status.toLowerCase().replace(' ', '_');
+        const currentColumn = taskCard.closest('.kanban-column');
+        const newColumn = document.querySelector(`.kanban-column[data-status="${newStatus}"]`);
+
+        if (currentColumn.dataset.status !== newStatus && newColumn) {
+            newColumn.querySelector('.column-tasks').appendChild(taskCard);
+            updateTaskCounters();
+        }
+    }
+}
+
+async function deleteTask(taskId) {
+    if (!confirm('Вы уверены, что хотите удалить эту задачу?')) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/task/${taskId}`, {
+            method: 'DELETE'
+        });
+
+        if (!response.ok) {
+            throw new Error('Ошибка при удалении задачи');
+        }
+
+        // Удаляем карточку из DOM
+        const taskCard = document.querySelector(`.task-card[data-task-id="${taskId}"]`);
+        if (taskCard) {
+            taskCard.remove();
+            updateTaskCounters();
+        }
+    } catch (error) {
+        console.error('Ошибка:', error);
+        alert('Не удалось удалить задачу');
+    }
+}
+</script>
+</body>
+</html>

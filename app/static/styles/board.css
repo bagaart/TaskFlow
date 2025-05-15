@@ -1,0 +1,597 @@
+/* === Основные стили === */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Montserrat', sans-serif;
+}
+
+body {
+    display: flex;
+    min-height: 100vh;
+    background-color: #f8fafc;
+    color: #333;
+    line-height: 1.6;
+}
+
+/* === Header === */
+.header {
+    padding: 20px 40px;
+    background: linear-gradient(135deg, #4a76a8 0%, #3a5f8a 100%);
+    color: white;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    position: fixed;
+    width: 100%;
+    top: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    height: 70px;
+}
+
+.logo {
+    font-size: 24px;
+    font-weight: 700;
+    color: white;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.logo span {
+    transition: transform 0.3s ease;
+}
+
+.logo:hover span {
+    transform: translateY(-2px);
+}
+
+/* === Sidebar === */
+.sidebar {
+    width: 260px;
+    background: white;
+    box-shadow: 2px 0 15px rgba(0, 0, 0, 0.08);
+    padding: 20px 0;
+    position: fixed;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    top: 70px;
+    transition: all 0.3s ease;
+    z-index: 90;
+}
+
+.nav-menu {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    padding: 0 15px;
+    flex-grow: 1;
+}
+
+.nav-menu li {
+    margin-bottom: 8px;
+}
+
+.nav-menu a {
+    display: flex;
+    align-items: center;
+    padding: 12px 15px;
+    color: #555;
+    text-decoration: none;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    font-size: 15px;
+    font-weight: 500;
+}
+
+.nav-menu a:hover, .nav-menu a.active {
+    background: #f0f4f8;
+    color: #4a76a8;
+    transform: translateX(5px);
+}
+
+.nav-menu .icon {
+    margin-right: 12px;
+    width: 20px;
+    height: 20px;
+    opacity: 0.8;
+    transition: opacity 0.3s ease;
+}
+
+.nav-menu a:hover .icon {
+    opacity: 1;
+}
+
+.create-task {
+    margin: 20px 0;
+    background-color: #4a76a8;
+    color: white !important;
+    padding: 12px 15px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 10px rgba(74, 118, 168, 0.3);
+}
+
+.create-task:hover {
+    background-color: #3a5f8a !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(74, 118, 168, 0.4);
+}
+
+.bottom-menu {
+    margin-top: auto;
+    border-top: 1px solid #eee;
+    padding-top: 15px;
+}
+
+.bottom-menu a {
+    color: #777 !important;
+    padding: 10px 15px;
+    font-size: 14px;
+}
+
+.bottom-menu a:hover {
+    color: #4a76a8 !important;
+}
+
+/* === Main Content === */
+.main-content {
+    margin-left: 260px;
+    margin-top: 70px;
+    padding: 30px;
+    width: calc(100% - 260px);
+    transition: all 0.3s ease;
+}
+
+.board-header {
+    margin-bottom: 25px;
+}
+
+.board-header h1 {
+    font-size: 28px;
+    color: #2c3e50;
+    margin-bottom: 5px;
+    font-weight: 600;
+}
+
+.board-header p {
+    color: #64748b;
+    font-size: 15px;
+}
+
+/* === Kanban Board === */
+.kanban-board {
+    display: flex;
+    gap: 20px;
+    padding: 10px;
+    overflow-x: auto;
+    height: calc(100vh - 160px);
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 #f1f5f9;
+}
+
+.kanban-board::-webkit-scrollbar {
+    height: 8px;
+}
+
+.kanban-board::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 10px;
+}
+
+.kanban-board::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1;
+    border-radius: 10px;
+}
+
+.kanban-column {
+    flex: 1;
+    min-width: 300px;
+    background: #f8fafc;
+    border-radius: 12px;
+    padding: 15px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e2e8f0;
+}
+
+.column-header {
+    font-weight: 600;
+    font-size: 16px;
+    margin-bottom: 15px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: #334155;
+}
+
+.task-count {
+    background: #e2e8f0;
+    color: #475569;
+    padding: 3px 8px;
+    border-radius: 20px;
+    font-size: 13px;
+}
+
+.column-tasks {
+    min-height: 100px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+/* === Task Card === */
+.task-card {
+    background: white;
+    border-radius: 10px;
+    padding: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    cursor: grab;
+    border: 1px solid #e2e8f0;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.task-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+    border-color: #cbd5e1;
+}
+
+.task-card:active {
+    cursor: grabbing;
+}
+
+.task-card.dragging {
+    opacity: 0.8;
+    transform: scale(1.02);
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+    border: 1px dashed #94a3b8;
+}
+
+.task-card-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.task-title {
+    font-weight: 600;
+    font-size: 15px;
+    color: #1e293b;
+    flex-grow: 1;
+}
+
+.task-priority {
+    font-size: 12px;
+    padding: 4px 8px;
+    border-radius: 20px;
+    font-weight: 500;
+    white-space: nowrap;
+    margin-right: 30px;
+}
+
+.task-priority.high {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.task-priority.medium {
+    background: #ffedd5;
+    color: #c2410c;
+}
+
+.task-priority.low {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.task-description {
+    font-size: 14px;
+    color: #64748b;
+    margin-bottom: 15px;
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.task-footer {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    color: #64748b;
+    align-items: center;
+}
+
+.task-deadline {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+}
+
+.task-deadline.overdue {
+    color: #b91c1c;
+    font-weight: 500;
+}
+
+.task-deadline.urgent {
+    color: #c2410c;
+    font-weight: 500;
+}
+
+.task-assignees {
+    display: flex;
+    align-items: center;
+}
+
+.assignee-avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #4a76a8;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: bold;
+    margin-left: -6px;
+    border: 2px solid white;
+    transition: transform 0.3s ease;
+}
+
+.assignee-avatar:first-child {
+    margin-left: 0;
+}
+
+.assignee-avatar:hover {
+    transform: translateY(-2px);
+    z-index: 1;
+}
+
+/* === Task Menu === */
+.task-menu {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+}
+
+.task-menu-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #94a3b8;
+    font-size: 16px;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+}
+
+.task-menu-btn:hover {
+    background: #f1f5f9;
+    color: #64748b;
+}
+
+.task-dropdown {
+    position: absolute;
+    right: 0;
+    top: 100%;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+    z-index: 100;
+    display: none;
+    min-width: 180px;
+    border: 1px solid #e2e8f0;
+    overflow: hidden;
+}
+
+.task-dropdown.show {
+    display: block;
+    animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.task-dropdown-item {
+    padding: 10px 15px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    color: #475569;
+}
+
+.task-dropdown-item:hover {
+    background: #f8fafc;
+    color: #4a76a8;
+}
+
+.task-dropdown-item i {
+    margin-right: 10px;
+    width: 16px;
+    text-align: center;
+    color: #94a3b8;
+}
+
+.task-dropdown-item:hover i {
+    color: #4a76a8;
+}
+
+/* === Modal Styles === */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(3px);
+    overflow-y: auto; /* Добавляем прокрутку если контент не помещается */
+    padding: 20px; /* Отступ для маленьких экранов */
+}
+
+.modal-content {
+    background: white;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 500px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    animation: modalFadeIn 0.3s ease;
+    overflow: hidden;
+    margin: auto; /* Центрируем по вертикали и горизонтали */
+    position: relative; /* Для позиционирования кнопки закрытия */
+}
+
+
+@keyframes modalFadeIn {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.modal-content h2 {
+    padding: 20px;
+    font-size: 20px;
+    color: #1e293b;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.close-btn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    font-size: 22px;
+    color: #94a3b8;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: none;
+    border: none;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+}
+
+.close-btn:hover {
+    color: #475569;
+    background: #f1f5f9;
+}
+
+.form-group {
+    padding: 0 20px;
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 14px;
+    color: #475569;
+    font-weight: 500;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    background: #f8fafc;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #4a76a8;
+    box-shadow: 0 0 0 3px rgba(74, 118, 168, 0.1);
+    background: white;
+}
+
+.form-group textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+
+.btn-save {
+    width: calc(100% - 40px);
+    margin: 20px;
+    padding: 12px;
+    background-color: #4a76a8;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-save:hover {
+    background-color: #3a5f8a;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* === Responsive Styles === */
+@media (max-width: 1024px) {
+    .sidebar {
+        width: 220px;
+    }
+    .main-content {
+        margin-left: 220px;
+        width: calc(100% - 220px);
+    }
+}
+
+@media (max-width: 768px) {
+    .sidebar {
+        transform: translateX(-100%);
+    }
+    .sidebar.open {
+        transform: translateX(0);
+    }
+    .main-content {
+        margin-left: 0;
+        width: 100%;
+        padding: 20px;
+    }
+    .kanban-board {
+        flex-direction: column;
+        height: auto;
+    }
+    .kanban-column {
+        min-width: 100%;
+    }
+    .modal-content {
+        max-width: 90%;
+    }
+}

@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskFlow - Задачи</title>
+    <link rel="stylesheet" href="../static/styles/tasks.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+<header class="header">
+    <a class="logo" href="{{ url_for('taskflow.index') }}"><span>TaskFlow</span></a>
+</header>
+
+<aside class="sidebar">
+    <ul class="nav-menu">
+        <li><a href="#"><img class="icon" src="https://img.icons8.com/windows/32/search--v1.png" alt="search--v1"/>Поиск</a></li>
+        <li><a href="{{ url_for('taskflow.tasks') }}"><img class="icon" src="https://img.icons8.com/windows/32/todo-list.png" alt="todo-list"/>Задачи</a></li>
+        <li><a href="{{ url_for('taskflow.projects') }}"><img class="icon" src="https://img.icons8.com/windows/32/flipboard.png" alt="flipboard"/>Проекты</a></li>
+        <li><a href="#"><img class="icon" src="https://img.icons8.com/windows/32/gender-neutral-user.png" alt="gender-neutral-user"/>Профиль</a></li>
+        <li><a href="{{ url_for('taskflow.create_task') }}" class="create-task"><img class="icon" src="https://img.icons8.com/windows/32/plus-math.png" alt="plus-math"/>Создать задачу</a></li>
+        <li><a href="{{ url_for('taskflow.create_project') }}" class="create-task"><img class="icon" src="https://img.icons8.com/windows/32/plus-math.png" alt="plus-math"/>Создать проект</a></li>
+    </ul>
+    <ul class="nav-menu bottom-menu">
+        <li><a href="#"><img class="icon" src="https://img.icons8.com/windows/32/help.png" alt="help"/>Помощь</a></li>
+        <li><a href="#"><img class="icon" src="https://img.icons8.com/windows/32/settings--v1.png" alt="settings--v1"/>Настройки</a></li>
+        <li><a href="{{ url_for('taskflow.logout') }}"><img class="icon" src="https://img.icons8.com/windows/32/exit.png" alt="exit"/>Выход</a></li>
+    </ul>
+</aside>
+
+<main class="main-content">
+    <div class="tasks-header">
+        <h1>Ваши задачи</h1>
+        <p>Здесь отображаются задачи, где вы исполнитель или менеджер.</p>
+    </div>
+
+    <div class="filter-options">
+        <div class="filter-group">
+            <label for="status-filter"><i class="fas fa-filter"></i> Статус:</label>
+            <select id="status-filter" class="filter-select">
+                <option value="all">Все</option>
+                <option value="todo">To Do</option>
+                <option value="in_progress">In Progress</option>
+                <option value="done">Done</option>
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <label for="role-filter"><i class="fas fa-user-tag"></i> Роль:</label>
+            <select id="role-filter" class="filter-select">
+                <option value="all">Все</option>
+                <option value="executor">Исполнитель</option>
+                <option value="manager">Менеджер</option>
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <label for="project-filter"><i class="fas fa-project-diagram"></i> Проект:</label>
+            <select id="project-filter" class="filter-select">
+                <option value="all">Все проекты</option>
+                {% for project in user_projects %}
+                <option value="{{ project.id }}">{{ project.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <button class="btn-apply-filters">Применить</button>
+    </div>
+
+    <div class="tasks-list">
+        {% if tasks %}
+            {% for task in tasks %}
+            <div class="task-card"
+                 data-id="{{ task.id }}"
+                 data-status="{{ task.status.lower().replace(' ', '_') }}"
+                 data-role="{% if task.manager_id == current_user.id %}manager{% else %}executor{% endif %}"
+                 data-project="{{ task.project_id }}"
+                 data-deadline="{{ task.deadline.strftime('%Y-%m-%d') if task.deadline else '' }}">
+                <div class="task-card-header">
+                    <div class="task-title-container">
+                        <strong>{{ task.title }}</strong>
+                        <span class="task-status {{ task.status.lower().replace(' ', '-') }}">
+                            {{ task.status }}
+                        </span>
+                    </div>
+                    <span class="task-priority {{ task.priority.lower() if task.priority else 'normal' }}">
+                        {% if task.priority %}
+                            {{ task.priority }}
+                        {% else %}
+                            Обычный
+                        {% endif %}
+                    </span>
+                </div>
+
+                <div class="task-project">
+                    <i class="fas fa-project-diagram"></i>
+                    {{ task.project.name }}
+                </div>
+
+                <p class="task-description">
+                    {{ task.description|truncate(120) if task.description else "Нет описания" }}
+                </p>
+
+                <div class="task-meta">
+                    <div class="task-deadline">
+                        <i class="fas fa-calendar-times"></i>
+                        {% if task.deadline %}
+                            {{ task.deadline.strftime('%d.%m.%Y') }}
+                            {% set days_remaining = (task.deadline.date() - datetime.now().date()).days %}
+                            <span class="days-remaining {% if days_remaining < 0 %}overdue{% elif days_remaining < 3 %}urgent{% endif %}">
+                                {% if days_remaining > 0 %}
+                                    Осталось {{ days_remaining }} дн.
+                                {% elif days_remaining == 0 %}
+                                    Сегодня
+                                {% else %}
+                                    Просрочено
+                                {% endif %}
+                            </span>
+                        {% else %}
+                            Нет дедлайна
+                        {% endif %}
+                    </div>
+
+                    <div class="task-role">
+                        {% if task.manager_id == current_user.id %}
+                            <i class="fas fa-crown"></i> Вы менеджер
+                        {% else %}
+                            <i class="fas fa-user-check"></i> Вы исполнитель
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="no-tasks">
+                <img src="https://img.icons8.com/fluency/96/000000/nothing-found.png" alt="No tasks">
+                <p>У вас пока нет задач</p>
+                <a href="{{ url_for('taskflow.create_task') }}" class="btn-create-task">Создать первую задачу</a>
+            </div>
+        {% endif %}
+    </div>
+</main>
+
+<!-- Боковая панель с деталями задачи -->
+<div class="task-details" id="taskDetails">
+    <div class="task-details-header">
+        <h2 id="detailTitle">Название задачи</h2>
+        <span class="close-btn">&times;</span>
+    </div>
+
+    <div class="task-info-section">
+        <h3><i class="fas fa-info-circle"></i> Описание задачи</h3>
+        <p id="detailDescription">Описание задачи будет показано здесь.</p>
+    </div>
+
+    <div class="task-stats">
+        <div class="stat-item">
+            <i class="fas fa-calendar-plus"></i>
+            <span id="createdDate">Создана: ...</span>
+        </div>
+        <div class="stat-item">
+            <i class="fas fa-calendar-times"></i>
+            <span id="deadlineDate">Дедлайн: ...</span>
+        </div>
+        <div class="stat-item">
+            <i class="fas fa-project-diagram"></i>
+            <span id="projectName">Проект: ...</span>
+        </div>
+        <div class="stat-item">
+            <i class="fas fa-flag"></i>
+            <span id="taskPriority">Приоритет: ...</span>
+        </div>
+        <div class="stat-item">
+            <i class="fas fa-tasks"></i>
+            <span id="taskStatus">Статус: ...</span>
+        </div>
+    </div>
+
+    <div class="task-people-section">
+        <div class="role-section">
+            <h4><i class="fas fa-crown"></i> Менеджер</h4>
+            <ul class="people-list" id="managerInfo">
+                <li class="loading">Загрузка...</li>
+            </ul>
+        </div>
+
+        <div class="role-section">
+            <h4><i class="fas fa-user-check"></i> Исполнители</h4>
+            <ul class="people-list" id="executorsList">
+                <li class="loading">Загрузка...</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="task-actions">
+        <button class="btn-change-status" id="changeStatusBtn">
+            <i class="fas fa-sync-alt"></i> Изменить статус
+        </button>
+        <button class="btn-go-to-task" id="goToTaskBtn">
+            <i class="fas fa-external-link-alt"></i> Перейти к задаче
+        </button>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Инициализация фильтров
+    initFilters();
+
+    // Обработчики для карточек задач
+    setupTaskCards();
+
+    // Инициализация боковой панели
+    setupTaskDetailsPanel();
+});
+
+// Инициализация фильтров
+function initFilters() {
+    const applyBtn = document.querySelector('.btn-apply-filters');
+    applyBtn.addEventListener('click', applyFilters);
+
+    // Применяем фильтры из URL при загрузке
+    const urlParams = new URLSearchParams(window.location.search);
+    const statusFilter = urlParams.get('status') || 'all';
+    const roleFilter = urlParams.get('role') || 'all';
+    const projectFilter = urlParams.get('project') || 'all';
+
+    document.getElementById('status-filter').value = statusFilter;
+    document.getElementById('role-filter').value = roleFilter;
+    document.getElementById('project-filter').value = projectFilter;
+
+    applyFilters();
+}
+
+// Применение фильтров
+function applyFilters() {
+    const statusFilter = document.getElementById('status-filter').value;
+    const roleFilter = document.getElementById('role-filter').value;
+    const projectFilter = document.getElementById('project-filter').value;
+
+    const tasks = document.querySelectorAll('.task-card');
+
+    tasks.forEach(task => {
+        const taskStatus = task.dataset.status;
+        const taskRole = task.dataset.role;
+        const taskProject = task.dataset.project;
+
+        let showTask = true;
+
+        // Применяем фильтры
+        if (statusFilter !== 'all' && taskStatus !== statusFilter) {
+            showTask = false;
+        }
+
+        if (roleFilter !== 'all' && taskRole !== roleFilter) {
+            showTask = false;
+        }
+
+        if (projectFilter !== 'all' && taskProject !== projectFilter) {
+            showTask = false;
+        }
+
+        // Показываем/скрываем задачу
+        task.style.display = showTask ? 'block' : 'none';
+    });
+
+    // Обновляем URL без перезагрузки страницы
+    updateUrlFilters(statusFilter, roleFilter, projectFilter);
+}
+
+// Обновление параметров URL
+function updateUrlFilters(status, role, project) {
+    const url = new URL(window.location);
+    url.searchParams.set('status', status);
+    url.searchParams.set('role', role);
+    url.searchParams.set('project', project);
+    window.history.pushState({}, '', url);
+}
+
+// Настройка обработчиков для карточек задач
+function setupTaskCards() {
+    document.querySelectorAll('.task-card').forEach(card => {
+        card.addEventListener('click', async function() {
+            const taskId = this.dataset.id;
+            await showTaskDetails(taskId, this);
+        });
+    });
+}
+
+// Показать детали задачи
+async function showTaskDetails(taskId, cardElement) {
+    try {
+        // Получаем данные задачи
+        const response = await fetch(`/api/task/${taskId}`);
+        if (!response.ok) throw new Error('Ошибка загрузки данных задачи');
+
+        const task = await response.json();
+
+        // Обновляем основную информацию
+        document.getElementById('detailTitle').textContent = task.title;
+        document.getElementById('detailDescription').textContent = task.description || 'Нет описания';
+        document.getElementById('createdDate').textContent = `Создана: ${task.created_at ? formatDate(task.created_at) : 'Неизвестно'}`;
+        document.getElementById('deadlineDate').textContent = `Дедлайн: ${task.deadline ? formatDate(task.deadline) : 'Нет дедлайна'}`;
+
+        // Безопасное обновление информации о проекте
+        const projectNameElement = document.getElementById('projectName');
+        if (task.project) {
+            projectNameElement.textContent = `Проект: ${task.project.name}`;
+        } else {
+            projectNameElement.textContent = 'Проект: Не назначен';
+        }
+
+        document.getElementById('taskPriority').textContent = `Приоритет: ${task.priority || 'Обычный'}`;
+        document.getElementById('taskStatus').textContent = `Статус: ${task.status}`;
+
+        // Загружаем информацию о людях
+        await loadTaskPeople(taskId);
+
+        // Настраиваем кнопки действий
+        setupTaskActions(taskId, task.status);
+
+        // Открываем панель деталей
+        openTaskDetails();
+    } catch (error) {
+        console.error('Ошибка при загрузке деталей задачи:', error);
+        alert('Не удалось загрузить информацию о задаче');
+    }
+}
+
+// Загрузка информации о людях (менеджер и исполнители)
+async function loadTaskPeople(taskId) {
+    const managerInfo = document.getElementById('managerInfo');
+    const executorsList = document.getElementById('executorsList');
+
+    managerInfo.innerHTML = '<li class="loading">Загрузка...</li>';
+    executorsList.innerHTML = '<li class="loading">Загрузка...</li>';
+
+    try {
+        const response = await fetch(`/api/task/${taskId}/people`);
+        if (!response.ok) throw new Error('Ошибка загрузки информации об участниках');
+
+        const data = await response.json();
+
+        // Очищаем списки
+        managerInfo.innerHTML = '';
+        executorsList.innerHTML = '';
+
+        // Добавляем менеджера
+        if (data.manager) {
+            const li = createPersonListItem(data.manager);
+            managerInfo.appendChild(li);
+        } else {
+            managerInfo.innerHTML = '<li class="no-members">Не назначен</li>';
+        }
+
+        // Добавляем исполнителей
+        if (data.executors && data.executors.length > 0) {
+            data.executors.forEach(executor => {
+                const li = createPersonListItem(executor);
+                executorsList.appendChild(li);
+            });
+        } else {
+            executorsList.innerHTML = '<li class="no-members">Не назначены</li>';
+        }
+
+    } catch (error) {
+        managerInfo.innerHTML = `<li class="error">${error.message}</li>`;
+        executorsList.innerHTML = `<li class="error">${error.message}</li>`;
+        console.error('Ошибка при загрузке участников:', error);
+    }
+}
+
+// Создание элемента списка для участника задачи
+function createPersonListItem(person) {
+    const li = document.createElement('li');
+    li.className = 'person-item';
+    li.innerHTML = `
+        <div class="person-avatar">
+            ${person.name.charAt(0).toUpperCase()}
+        </div>
+        <div class="person-info">
+            <span class="person-name">${person.name}</span>
+            <span class="person-email">${person.email}</span>
+        </div>
+    `;
+    return li;
+}
+
+// Настройка кнопок действий
+function setupTaskActions(taskId, currentStatus) {
+    const changeStatusBtn = document.getElementById('changeStatusBtn');
+    const goToTaskBtn = document.getElementById('goToTaskBtn');
+
+    // Кнопка изменения статуса
+    changeStatusBtn.onclick = async () => {
+        try {
+            let newStatus;
+            switch(currentStatus) {
+                case 'To Do':
+                    newStatus = 'In Progress';
+                    break;
+                case 'In Progress':
+                    newStatus = 'Done';
+                    break;
+                case 'Done':
+                    newStatus = 'To Do';
+                    break;
+                default:
+                    newStatus = 'To Do';
+            }
+
+            const response = await fetch(`/api/task/${taskId}/status`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ status: newStatus })
+            });
+
+            if (!response.ok) throw new Error('Ошибка при изменении статуса');
+
+            // Обновляем интерфейс
+            const taskCard = document.querySelector(`.task-card[data-id="${taskId}"]`);
+            if (taskCard) {
+                taskCard.dataset.status = newStatus.toLowerCase().replace(' ', '_');
+                taskCard.querySelector('.task-status').textContent = newStatus;
+                taskCard.querySelector('.task-status').className = `task-status ${newStatus.toLowerCase().replace(' ', '-')}`;
+            }
+
+            // Закрываем панель и обновляем фильтры
+            closeTaskDetails();
+            applyFilters();
+
+        } catch (error) {
+            console.error('Ошибка:', error);
+            alert('Не удалось изменить статус задачи');
+        }
+    };
+
+    // Кнопка перехода к задаче
+    goToTaskBtn.onclick = () => {
+        window.location.href = `/task/${taskId}`;
+    };
+}
+
+// Форматирование даты
+function formatDate(dateString) {
+    if (!dateString) return 'Нет данных';
+    try {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('ru-RU', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        });
+    } catch (e) {
+        console.error('Ошибка форматирования даты:', e);
+        return 'Некорректная дата';
+    }
+}
+
+// Управление боковой панелью деталей
+function setupTaskDetailsPanel() {
+    document.querySelector('.close-btn').addEventListener('click', closeTaskDetails);
+}
+
+function openTaskDetails() {
+    document.getElementById('taskDetails').classList.add('open');
+}
+
+function closeTaskDetails() {
+    document.getElementById('taskDetails').classList.remove('open');
+}
+</script>
+</body>
+</html>

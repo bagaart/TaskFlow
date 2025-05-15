@@ -1,4 +1,3 @@
-<!-- project_create.css -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -6,98 +5,259 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TaskFlow - Создание проекта</title>
     <link rel="stylesheet" href="../static/styles/project_create.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-   <link
-     href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap"
-     rel="stylesheet"
-   />
-   <link
-     rel="stylesheet"
-     href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css"
-   />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap"
+          rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css">
 </head>
 <body>
-    <header class="header">
-        <a class="logo" href="{{ url_for('taskflow.index') }}"><span>TaskFlow</span></a>
-    </header>
+<header class="header">
+    <a class="logo" href="{{ url_for('taskflow.index') }}"><span>TaskFlow</span></a>
+</header>
 
-    <aside class="sidebar">
-        <ul class="nav-menu">
-            <li><a href="#"><img class="icon" src="https://img.icons8.com/windows/32/search--v1.png" alt="search--v1"/>Поиск</a></li>
-            <li><a href="#"><img class="icon" src="https://img.icons8.com/windows/32/todo-list.png" alt="todo-list"/>Задачи</a></li>
-            <li><a href="#"><img class="icon" src="https://img.icons8.com/windows/32/flipboard.png" alt="flipboard"/>Проекты</a></li>
-            <li><a href="#"><img class="icon" src="https://img.icons8.com/windows/32/gender-neutral-user.png" alt="gender-neutral-user"/>Профиль</a></li>
+<aside class="sidebar">
+    <ul class="nav-menu">
+        <li><a href="#"><img class="icon" src="https://img.icons8.com/windows/32/search--v1.png" alt="search--v1"/>Поиск</a></li>
+        <li><a href="{{ url_for('taskflow.tasks') }}"><img class="icon" src="https://img.icons8.com/windows/32/todo-list.png" alt="todo-list"/>Задачи</a></li>
+        <li><a href="{{ url_for('taskflow.projects') }}"><img class="icon" src="https://img.icons8.com/windows/32/flipboard.png" alt="flipboard"/>Проекты</a></li>
+        <li><a href="#"><img class="icon" src="https://img.icons8.com/windows/32/gender-neutral-user.png" alt="gender-neutral-user"/>Профиль</a></li>
+        <li><a href="{{ url_for('taskflow.create_task') }}" class="create-task"><img class="icon" src="https://img.icons8.com/windows/32/plus-math.png" alt="plus-math"/>Создать задачу</a></li>
+        <li><a href="{{ url_for('taskflow.create_project') }}" class="create-task"><img class="icon" src="https://img.icons8.com/windows/32/plus-math.png" alt="plus-math"/>Создать проект</a></li>
+    </ul>
+    <ul class="nav-menu bottom-menu">
+        <li><a href="#"><img class="icon" src="https://img.icons8.com/windows/32/help.png" alt="help"/>Помощь</a></li>
+        <li><a href="#"><img class="icon" src="https://img.icons8.com/windows/32/settings--v1.png" alt="settings--v1"/>Настройки</a></li>
+        <li><a href="{{ url_for('taskflow.logout') }}"><img class="icon" src="https://img.icons8.com/windows/32/exit.png" alt="exit"/>Выход</a></li>
+    </ul>
+</aside>
 
-            <li><a href="{{ url_for('taskflow.task_create') }}" class="create-task"><img class="icon" src="https://img.icons8.com/windows/32/plus-math.png" alt="plus-math"/>Создать задачу</a></li>
+<main class="main-content">
+    <div class="create-project-header">
+        <h1>Создать проект</h1>
+    </div>
+    <div class="project-form-container">
+        <form class="project-form" method="POST" action="{{ url_for('taskflow.create_project') }}">
+            <!-- Название проекта -->
+            <div class="form-group">
+                <label for="project-name">Название проекта*</label>
+                <input type="text" id="project-name" name="project-name" class="form-control"
+                       placeholder="Введите название проекта" required>
+            </div>
 
-           <li><a href="{{ url_for('taskflow.create_project') }}" class="create-task"><img class="icon" src="https://img.icons8.com/windows/32/plus-math.png" alt="plus-math"/>Создать проект</a></li>
+            <!-- Описание проекта -->
+            <div class="form-group">
+                <label for="project-description">Описание проекта</label>
+                <textarea id="project-description" name="project-description"
+                          class="form-control"
+                          rows="5"
+                          placeholder="Опишите проект подробнее..."></textarea>
+            </div>
+
+            <!-- Срок выполнения проекта -->
+            <div class="form-group">
+                <label for="project-deadline">Срок выполнения проекта</label>
+                <input type="date" id="project-deadline" class="form-control" name="project-deadline">
+            </div>
+
+            <!-- Участники проекта -->
+            <div class="form-group">
+                <label>Участники проекта</label>
+                <div class="participants-container">
+                    <input type="text" id="participant-search" placeholder="Поиск по участникам"
+                           class="form-control" disabled>
+                    <button type="button" class="btn-add btn-add-participant" onclick="openParticipantModal()">
+                        + Добавить участника
+                    </button>
+                    <ul id="participant-list" class="selected-users participant-chips"></ul>
+                </div>
+            </div>
+
+            <!-- Менеджер проекта -->
+            <div class="form-group">
+                <label for="project-manager">Менеджер проекта</label>
+                <select id="project-manager" class="form-control" name="project-manager" disabled>
+                    <option value="">Выберите участника</option>
+                </select>
+            </div>
+
+            <!-- Аналитик проекта -->
+            <div class="form-group">
+                <label for="project-analyst">Аналитик проекта</label>
+                <select id="project-analyst" class="form-control" name="project-analyst" disabled>
+                    <option value="">Выберите участника</option>
+                </select>
+            </div>
+
+            <div class="form-actions">
+                <button type="button" class="btn-cancel" onclick="window.history.back()">Отмена</button>
+                <button type="submit" class="btn-create">Создать проект</button>
+            </div>
+        </form>
+    </div>
+</main>
+
+<!-- Modal для выбора пользователей -->
+<div id="participantModal" class="modal">
+    <div class="modal-content">
+        <span class="close-btn" onclick="closeParticipantModal()">&times;</span>
+        <h2>Добавить участников</h2>
+        <input type="text" id="user-search" placeholder="Поиск по имени или email..." />
+        <ul id="user-list" class="user-list">
+            {% for user in users %}
+                <li>
+                    <label>
+                        <input type="checkbox" value="{{ user.id }}" data-name="{{ user.name }}">
+                        {{ user.name }} <{{ user.email }}>
+                    </label>
+                </li>
+            {% endfor %}
         </ul>
+        <button class="btn-add btn-confirm" onclick="addSelectedParticipants()">Добавить</button>
+    </div>
+</div>
 
-        <ul class="nav-menu bottom-menu">
-            <li><a href="#"><img class="icon" src="https://img.icons8.com/windows/32/help.png" alt="help"/>Помощь</a></li>
-            <li><a href="#"><img class="icon" src="https://img.icons8.com/windows/32/settings--v1.png" alt="settings--v1"/>Настройки</a></li>
-            <li><a href="{{ url_for('taskflow.logout') }}"><img class="icon" src="https://img.icons8.com/windows/32/exit.png" alt="exit"/>Выход</a></li>
-        </ul>
-    </aside>
+<script>
+let selectedParticipants = [];
 
-    <main class="main-content">
-        <div class="create-project-header">
-            <h1>Создать проект</h1>
-        </div>
+// Установка минимальной даты (сегодня)
+document.addEventListener('DOMContentLoaded', () => {
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('project-deadline').setAttribute('min', today);
+});
 
-        <div class="project-form-container">
-            <form class="project-form" method="POST" action="{{ url_for('taskflow.create_project') }}">
-                <!-- Название проекта -->
-                <div class="form-group">
-                    <label for="project-name">Название проекта*</label>
-                    <input type="text" id="project-name" class="form-control" placeholder="Введите название проекта" required>
-                </div>
+function openParticipantModal() {
+    document.getElementById('participantModal').style.display = 'block';
+}
 
-                <!-- Описание проекта -->
-                <div class="form-group">
-                    <label for="project-description">Описание проекта</label>
-                    <textarea id="project-description" class="form-control" rows="5" placeholder="Опишите проект подробнее..."></textarea>
-                </div>
+function closeParticipantModal() {
+    document.getElementById('participantModal').style.display = 'none';
+}
 
-                <!-- Участники проекта -->
-                <div class="form-group">
-                    <label for="project-participants">Участники проекта</label>
-                    <select id="project-participants" class="form-control" multiple>
-                        {% for user in users %}
-                            <option value="{{ user.id }}">{{ user.name }}</option>
-                        {% endfor %}
-                    </select>
-                    <small class="form-hint">Выберите участников проекта</small>
-                </div>
+document.getElementById('user-search').addEventListener('input', function () {
+    const filter = this.value.toLowerCase();
+    const items = document.querySelectorAll('#user-list li');
+    items.forEach(item => {
+        const text = item.textContent.toLowerCase();
+        item.style.display = text.includes(filter) ? 'block' : 'none';
+    });
+});
 
-                <!-- Менеджер проекта -->
-                <div class="form-group">
-                    <label for="project-manager">Менеджер проекта</label>
-                    <select id="project-manager" class="form-control">
-                        {% for user in users %}
-                            <option value="{{ user.id }}">{{ user.name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
+function addSelectedParticipants() {
+    const checkboxes = document.querySelectorAll('#user-list input[type=checkbox]:checked');
+    checkboxes.forEach(cb => {
+        const userId = cb.value;
+        const userName = cb.getAttribute('data-name');
+        if (!selectedParticipants.find(p => p.id === userId)) {
+            selectedParticipants.push({id: userId, name: userName});
+        }
+        cb.checked = false;
+    });
 
-                <!-- Аналитик проекта -->
-                <div class="form-group">
-                    <label for="project-analyst">Аналитик проекта</label>
-                    <select id="project-analyst" class="form-control">
-                        {% for user in users %}
-                            <option value="{{ user.id }}">{{ user.name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
+    updateParticipantChips();
+    updateManagerAnalystDropdowns();
 
-                <div class="form-actions">
-                    <button type="button" class="btn-cancel">Отмена</button>
-                    <button type="submit" class="btn-create">Создать проект</button>
-                </div>
-            </form>
-        </div>
-    </main>
+    closeParticipantModal();
+}
 
+function updateParticipantChips() {
+    const container = document.getElementById('participant-list');
+    container.innerHTML = '';
+    selectedParticipants.forEach((p, index) => {
+        const li = document.createElement('li');
+        li.className = 'selected-user';
+        li.textContent = p.name;
+
+        const removeBtn = document.createElement('span');
+        removeBtn.textContent = ' ×';
+        removeBtn.style.color = 'red';
+        removeBtn.style.cursor = 'pointer';
+        removeBtn.onclick = () => {
+            selectedParticipants.splice(index, 1);
+            updateParticipantChips();
+            updateManagerAnalystDropdowns();
+        };
+
+        li.appendChild(removeBtn);
+        container.appendChild(li);
+    });
+}
+
+function updateManagerAnalystDropdowns() {
+    const managerSelect = document.getElementById('project-manager');
+    const analystSelect = document.getElementById('project-analyst');
+    managerSelect.disabled = selectedParticipants.length === 0;
+    analystSelect.disabled = selectedParticipants.length === 0;
+
+    // Clear options
+    managerSelect.innerHTML = '<option value="">Выберите участника</option>';
+    analystSelect.innerHTML = '<option value="">Выберите участника</option>';
+
+    selectedParticipants.forEach(p => {
+        const option1 = new Option(p.name, p.id);
+        const option2 = new Option(p.name, p.id);
+        managerSelect.add(option1);
+        analystSelect.add(option2);
+    });
+}
+
+// Перед отправкой формы
+document.querySelector('.project-form').onsubmit = function (e) {
+    e.preventDefault();
+
+    // Проверка обязательных полей
+    const projectName = document.getElementById('project-name').value.trim();
+    if (!projectName) {
+        alert('Введите название проекта');
+        return false;
+    }
+
+    // Проверка участников
+    if (selectedParticipants.length === 0) {
+        alert('Добавьте хотя бы одного участника');
+        return false;
+    }
+
+    // Проверка менеджера
+    const managerId = document.getElementById('project-manager').value;
+    if (!managerId) {
+        alert('Назначьте менеджера проекта');
+        return false;
+    }
+
+    // Проверка дедлайна (если указан)
+    const deadlineInput = document.getElementById('project-deadline');
+    if (deadlineInput.value) {
+        const deadline = new Date(deadlineInput.value);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        if (deadline < today) {
+            alert('Дедлайн не может быть в прошлом');
+            return false;
+        }
+    }
+
+    // Если все проверки пройдены, собираем данные формы
+    const formData = new FormData(this);
+
+    // Добавляем ID участников
+    selectedParticipants.forEach(p => {
+        formData.append("participants", p.id);
+    });
+
+    // Добавляем менеджера и аналитика
+    formData.append("manager", managerId);
+    formData.append("analyst", document.getElementById('project-analyst').value);
+
+    // Отправка
+    fetch(this.action, {
+        method: "POST",
+        body: formData
+    }).then(res => {
+        if (res.redirected) window.location.href = res.url;
+    });
+};
+</script>
 </body>
 </html>

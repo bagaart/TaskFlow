@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskFlow - Детали задачи</title>
+    <link rel="stylesheet" href="../static/styles/task_details.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+<header class="header">
+    <a class="logo" href="{{ url_for('taskflow.index') }}"><span>TaskFlow</span></a>
+</header>
+
+<aside class="sidebar">
+    <ul class="nav-menu">
+        <li><a href="#"><img class="icon" src="https://img.icons8.com/windows/32/search--v1.png" alt="search--v1"/>Поиск</a></li>
+        <li><a href="{{ url_for('taskflow.tasks') }}"><img class="icon" src="https://img.icons8.com/windows/32/todo-list.png" alt="todo-list"/>Задачи</a></li>
+        <li><a href="{{ url_for('taskflow.projects') }}"><img class="icon" src="https://img.icons8.com/windows/32/flipboard.png" alt="flipboard"/>Проекты</a></li>
+        <li><a href="#"><img class="icon" src="https://img.icons8.com/windows/32/gender-neutral-user.png" alt="gender-neutral-user"/>Профиль</a></li>
+        <li><a href="{{ url_for('taskflow.create_task') }}" class="create-task"><img class="icon" src="https://img.icons8.com/windows/32/plus-math.png" alt="plus-math"/>Создать задачу</a></li>
+        <li><a href="{{ url_for('taskflow.create_project') }}" class="create-task"><img class="icon" src="https://img.icons8.com/windows/32/plus-math.png" alt="plus-math"/>Создать проект</a></li>
+    </ul>
+    <ul class="nav-menu bottom-menu">
+        <li><a href="#"><img class="icon" src="https://img.icons8.com/windows/32/help.png" alt="help"/>Помощь</a></li>
+        <li><a href="#"><img class="icon" src="https://img.icons8.com/windows/32/settings--v1.png" alt="settings--v1"/>Настройки</a></li>
+        <li><a href="{{ url_for('taskflow.logout') }}"><img class="icon" src="https://img.icons8.com/windows/32/exit.png" alt="exit"/>Выход</a></li>
+    </ul>
+</aside>
+
+<main class="main-content">
+    <div class="task-container">
+        <div class="task-header">
+            <h1 id="taskTitle">Загрузка...</h1>
+            <div class="task-actions">
+                <button id="editTaskBtn" class="btn-edit">
+                    <i class="fas fa-edit"></i> Редактировать
+                </button>
+                <button id="deleteTaskBtn" class="btn-delete">
+                    <i class="fas fa-trash-alt"></i> Удалить
+                </button>
+            </div>
+        </div>
+
+        <div class="task-status-priority">
+            <div class="status-badge" id="taskStatusBadge">
+                <span class="status-text">Статус: Загрузка...</span>
+            </div>
+            <div class="priority-badge" id="taskPriorityBadge">
+                <span class="priority-text">Приоритет: Загрузка...</span>
+            </div>
+        </div>
+
+        <div class="task-content">
+            <div class="task-main-info">
+                <div class="task-description">
+                    <h2><i class="fas fa-align-left"></i> Описание</h2>
+                    <div id="taskDescription" class="description-text">Загрузка описания...</div>
+                </div>
+
+                <div class="task-dates">
+                    <div class="date-info">
+                        <h3><i class="fas fa-calendar-plus"></i> Дата создания</h3>
+                        <p id="createdDate">Загрузка...</p>
+                    </div>
+                    <div class="date-info">
+                        <h3><i class="fas fa-calendar-times"></i> Дедлайн</h3>
+                        <p id="deadlineDate">Загрузка...</p>
+                        <p id="daysRemaining" class="days-remaining"></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="task-side-info">
+                <div class="task-project">
+                    <h2><i class="fas fa-project-diagram"></i> Проект</h2>
+                    <div class="project-info">
+                        <a id="projectLink" href="#">
+                            <h3 id="projectName">Загрузка...</h3>
+                        </a>
+                        <p id="projectDescription">Загрузка описания проекта...</p>
+                    </div>
+                </div>
+
+                <div class="task-people">
+                    <div class="people-section">
+                        <h2><i class="fas fa-crown"></i> Менеджер</h2>
+                        <div class="person-card" id="managerCard">
+                            <div class="person-avatar">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <div class="person-info">
+                                <h3 id="managerName">Загрузка...</h3>
+                                <p id="managerEmail">Загрузка...</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="people-section">
+                        <h2><i class="fas fa-users"></i> Исполнители</h2>
+                        <div class="executors-list" id="executorsList">
+                            <div class="placeholder">Загрузка списка исполнителей...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="task-comments">
+            <h2><i class="fas fa-comments"></i> Комментарии</h2>
+            <div class="comments-list" id="commentsList">
+                <div class="comment-placeholder">Пока нет комментариев</div>
+            </div>
+            <div class="comment-form">
+                <textarea id="commentText" placeholder="Напишите комментарий..."></textarea>
+                <button id="addCommentBtn" class="btn-add-comment">
+                    <i class="fas fa-paper-plane"></i> Отправить
+                </button>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- Модальное окно редактирования -->
+<div class="modal" id="editTaskModal">
+    <div class="modal-content">
+        <span class="close-modal">&times;</span>
+        <h2>Редактирование задачи</h2>
+
+        <form id="editTaskForm">
+            <div class="form-group">
+                <label for="editTitle">Название задачи</label>
+                <input type="text" id="editTitle" required>
+            </div>
+
+            <div class="form-group">
+                <label for="editDescription">Описание</label>
+                <textarea id="editDescription" rows="4"></textarea>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="editStatus">Статус</label>
+                    <select id="editStatus">
+                        <option value="To Do">To Do</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="Done">Done</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="editPriority">Приоритет</label>
+                    <select id="editPriority">
+                        <option value="Низкий">Низкий</option>
+                        <option value="Средний">Средний</option>
+                        <option value="Высокий">Высокий</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="editDeadline">Дедлайн</label>
+                <input type="date" id="editDeadline">
+            </div>
+
+            <div class="form-actions">
+                <button type="button" id="cancelEditBtn" class="btn-cancel">Отмена</button>
+                <button type="submit" class="btn-save">Сохранить изменения</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Получаем ID задачи из URL
+    const taskId = window.location.pathname.split('/').pop();
+
+    // Загружаем данные задачи
+    loadTaskData(taskId);
+
+    // Настраиваем обработчики событий
+    setupEventHandlers(taskId);
+});
+
+// Загрузка данных задачи
+async function loadTaskData(taskId) {
+    try {
+        // Загружаем основную информацию о задаче
+        const taskResponse = await fetch(`/api/task/${taskId}`);
+        if (!taskResponse.ok) throw new Error('Ошибка загрузки данных задачи');
+        const task = await taskResponse.json();
+
+        // Обновляем интерфейс
+        updateTaskUI(task);
+
+        // Загружаем информацию о людях
+        await loadPeopleData(taskId);
+
+        // Загружаем комментарии
+        await loadComments(taskId);
+
+    } catch (error) {
+        console.error('Ошибка загрузки данных:', error);
+        showError('Не удалось загрузить данные задачи');
+    }
+}
+
+// Обновление интерфейса на основе данных задачи
+function updateTaskUI(task) {
+    document.getElementById('taskTitle').textContent = task.title;
+    document.getElementById('taskDescription').textContent = task.description || 'Нет описания';
+
+    // Статус
+    const statusBadge = document.getElementById('taskStatusBadge');
+    statusBadge.querySelector('.status-text').textContent = `Статус: ${task.status}`;
+    statusBadge.className = `status-badge ${task.status.toLowerCase().replace(' ', '-')}`;
+
+    // Приоритет
+    const priorityBadge = document.getElementById('taskPriorityBadge');
+    priorityBadge.querySelector('.priority-text').textContent = `Приоритет: ${task.priority || 'Не указан'}`;
+    priorityBadge.className = `priority-badge ${task.priority ? task.priority.toLowerCase() : 'normal'}`;
+
+    // Даты
+    document.getElementById('createdDate').textContent = task.created_at ? formatDate(task.created_at) : 'Не указана';
+
+    const deadlineDate = document.getElementById('deadlineDate');
+    const daysRemaining = document.getElementById('daysRemaining');
+
+    if (task.deadline) {
+        deadlineDate.textContent = formatDate(task.deadline);
+
+        const today = new Date();
+        const deadline = new Date(task.deadline);
+        const diffTime = deadline - today;
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        daysRemaining.textContent = diffDays > 0 ? `Осталось ${diffDays} дней` :
+                                  diffDays === 0 ? 'Срок сегодня' : 'Просрочено';
+        daysRemaining.className = `days-remaining ${diffDays < 0 ? 'overdue' :
+                                  diffDays < 3 ? 'urgent' : ''}`;
+    } else {
+        deadlineDate.textContent = 'Не установлен';
+        daysRemaining.textContent = '';
+    }
+
+    // Проект
+    if (task.project) {
+        document.getElementById('projectName').textContent = task.project.name;
+        document.getElementById('projectDescription').textContent = task.project.description || 'Нет описания';
+        document.getElementById('projectLink').href = `/board/${task.project.id}`;
+    }
+}
+
+// Загрузка информации о людях
+async function loadPeopleData(taskId) {
+    try {
+        const response = await fetch(`/api/task/${taskId}/people`);
+        if (!response.ok) throw new Error('Ошибка загрузки информации об участниках');
+
+        const data = await response.json();
+
+        // Менеджер
+        if (data.manager) {
+            document.getElementById('managerName').textContent = data.manager.name;
+            document.getElementById('managerEmail').textContent = data.manager.email;
+
+            const avatar = document.querySelector('#managerCard .person-avatar');
+            avatar.textContent = data.manager.name.charAt(0).toUpperCase();
+            avatar.style.backgroundColor = getRandomColor(data.manager.id);
+        }
+
+        // Исполнители
+        const executorsList = document.getElementById('executorsList');
+        executorsList.innerHTML = '';
+
+        if (data.executors && data.executors.length > 0) {
+            data.executors.forEach(executor => {
+                const executorElement = document.createElement('div');
+                executorElement.className = 'person-card';
+                executorElement.innerHTML = `
+                    <div class="person-avatar" style="background-color: ${getRandomColor(executor.id)}">
+                        ${executor.name.charAt(0).toUpperCase()}
+                    </div>
+                    <div class="person-info">
+                        <h3>${executor.name}</h3>
+                        <p>${executor.email}</p>
+                    </div>
+                `;
+                executorsList.appendChild(executorElement);
+            });
+        } else {
+            executorsList.innerHTML = '<div class="placeholder">Исполнители не назначены</div>';
+        }
+
+    } catch (error) {
+        console.error('Ошибка загрузки информации об участниках:', error);
+    }
+}
+
+// Загрузка комментариев
+async function loadComments(taskId) {
+    // В реальном приложении здесь был бы запрос к API
+    // Для примера используем заглушку
+    setTimeout(() => {
+        const commentsList = document.getElementById('commentsList');
+        commentsList.innerHTML = `
+            <div class="comment">
+                <div class="comment-author">
+                    <div class="author-avatar" style="background-color: #4a76a8">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="author-info">
+                        <h4>Иван Иванов</h4>
+                        <span class="comment-date">Сегодня в 14:30</span>
+                    </div>
+                </div>
+                <div class="comment-text">
+                    Пример комментария. Здесь будет текст, который оставил пользователь.
+                </div>
+            </div>
+        `;
+    }, 500);
+}
+
+// Настройка обработчиков событий
+function setupEventHandlers(taskId) {
+    // Кнопка редактирования
+    document.getElementById('editTaskBtn').addEventListener('click', () => {
+        openEditModal(taskId);
+    });
+
+    // Кнопка удаления
+    document.getElementById('deleteTaskBtn').addEventListener('click', () => {
+        deleteTask(taskId);
+    });
+
+    // Кнопка отправки комментария
+    document.getElementById('addCommentBtn').addEventListener('click', () => {
+        addComment(taskId);
+    });
+
+    // Обработчики модального окна
+    document.querySelector('.close-modal').addEventListener('click', closeEditModal);
+    document.getElementById('cancelEditBtn').addEventListener('click', closeEditModal);
+    document.getElementById('editTaskForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        saveTaskChanges(taskId);
+    });
+}
+
+// Открытие модального окна редактирования
+async function openEditModal(taskId) {
+    try {
+        // Загружаем текущие данные задачи
+        const response = await fetch(`/api/task/${taskId}`);
+        if (!response.ok) throw new Error('Ошибка загрузки данных задачи');
+        const task = await response.json();
+
+        // Заполняем форму
+        document.getElementById('editTitle').value = task.title;
+        document.getElementById('editDescription').value = task.description || '';
+        document.getElementById('editStatus').value = task.status || 'To Do';
+        document.getElementById('editPriority').value = task.priority || 'Средний';
+
+        if (task.deadline) {
+            const deadlineDate = new Date(task.deadline);
+            document.getElementById('editDeadline').value = deadlineDate.toISOString().split('T')[0];
+        } else {
+            document.getElementById('editDeadline').value = '';
+        }
+
+        // Показываем модальное окно
+        document.getElementById('editTaskModal').style.display = 'block';
+
+    } catch (error) {
+        console.error('Ошибка при открытии формы редактирования:', error);
+        showError('Не удалось загрузить данные для редактирования');
+    }
+}
+
+// Закрытие модального окна
+function closeEditModal() {
+    document.getElementById('editTaskModal').style.display = 'none';
+}
+
+// Сохранение изменений задачи
+async function saveTaskChanges(taskId) {
+    try {
+        const updatedTask = {
+            title: document.getElementById('editTitle').value,
+            description: document.getElementById('editDescription').value,
+            status: document.getElementById('editStatus').value,
+            priority: document.getElementById('editPriority').value,
+            deadline: document.getElementById('editDeadline').value || null
+        };
+
+        const response = await fetch(`/api/task/${taskId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(updatedTask)
+        });
+
+        if (!response.ok) throw new Error('Ошибка сохранения изменений');
+
+        // Закрываем модальное окно и обновляем данные
+        closeEditModal();
+        loadTaskData(taskId);
+
+    } catch (error) {
+        console.error('Ошибка сохранения изменений:', error);
+        showError('Не удалось сохранить изменения');
+    }
+}
+
+// Удаление задачи
+async function deleteTask(taskId) {
+    if (!confirm('Вы уверены, что хотите удалить эту задачу?')) return;
+
+    try {
+        const response = await fetch(`/api/task/${taskId}`, {
+            method: 'DELETE'
+        });
+
+        if (!response.ok) throw new Error('Ошибка удаления задачи');
+
+        // Перенаправляем на страницу задач
+        window.location.href = '/tasks';
+
+    } catch (error) {
+        console.error('Ошибка удаления задачи:', error);
+        showError('Не удалось удалить задачу');
+    }
+}
+
+// Добавление комментария
+async function addComment(taskId) {
+    const commentText = document.getElementById('commentText').value.trim();
+    if (!commentText) return;
+
+    try {
+        // В реальном приложении здесь был бы запрос к API
+        // Для примера просто добавляем комментарий локально
+
+        const commentsList = document.getElementById('commentsList');
+        if (commentsList.querySelector('.comment-placeholder')) {
+            commentsList.innerHTML = '';
+        }
+
+        const newComment = document.createElement('div');
+        newComment.className = 'comment';
+        newComment.innerHTML = `
+            <div class="comment-author">
+                <div class="author-avatar" style="background-color: ${getRandomColor(current_user.id)}">
+                    ${current_user.name.charAt(0).toUpperCase()}
+                </div>
+                <div class="author-info">
+                    <h4>${current_user.name}</h4>
+                    <span class="comment-date">Только что</span>
+                </div>
+            </div>
+            <div class="comment-text">
+                ${commentText}
+            </div>
+        `;
+
+        commentsList.prepend(newComment);
+        document.getElementById('commentText').value = '';
+
+    } catch (error) {
+        console.error('Ошибка добавления комментария:', error);
+        showError('Не удалось добавить комментарий');
+    }
+}
+
+// Вспомогательные функции
+function formatDate(dateString) {
+    if (!dateString) return 'Не указана';
+    try {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('ru-RU', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        });
+    } catch (e) {
+        console.error('Ошибка форматирования даты:', e);
+        return 'Некорректная дата';
+    }
+}
+
+function getRandomColor(seed) {
+    const colors = [
+        '#4a76a8', '#5c89bd', '#6e9cd2', '#80afe7',
+        '#92c2fc', '#a4d5ff', '#b6e8ff', '#c8fbff',
+        '#daffff', '#ecffff', '#feffff', '#ffffff'
+    ];
+    return colors[seed % colors.length];
+}
+
+function showError(message) {
+    const errorElement = document.createElement('div');
+    errorElement.className = 'error-message';
+    errorElement.textContent = message;
+    document.body.appendChild(errorElement);
+
+    setTimeout(() => {
+        errorElement.remove();
+    }, 3000);
+}
+</script>
+</body>
+</html>
